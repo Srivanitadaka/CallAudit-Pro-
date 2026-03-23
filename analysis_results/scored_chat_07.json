@@ -1,21 +1,21 @@
 {
-  "summary": "The customer's internet issue was not resolved, and the agent's response was inadequate, leading to customer frustration and dissatisfaction. The agent failed to empathize with the customer's situation and provide a timely solution.",
+  "summary": "The customer's internet issue was not resolved, and they were unhappy with the agent's response. The customer had been experiencing internet outages for two weeks and was frustrated with the lack of resolution.",
   "sentiment": "negative",
   "performance": "poor",
-  "issue": "Agent failed to acknowledge customer's previous attempts and showed no understanding of their frustration",
-  "resolution": "Acknowledge customer's previous attempts and show understanding of their frustration",
-  "overall_score": 40,
-  "grade": "D",
+  "issue": "The agent did not offer to escalate the issue to a manager immediately, despite the customer's repeated requests for help.",
+  "resolution": "The agent should have acknowledged the customer's frustration and apologized for the inconvenience.",
+  "overall_score": 20,
+  "grade": "F",
   "call_outcome": "Unresolved",
   "was_resolved": false,
-  "issue_detected": "The customer's internet connection cuts out every few hours, affecting their work from home",
+  "issue_detected": "Internet outages",
   "satisfaction": {
-    "rating": 1.5,
-    "sentiment": "Negative",
-    "sentiment_score": 0.2,
+    "sentiment": "negative",
+    "sentiment_score": 0.1,
     "emotional_stability": "Poor",
     "customer_frustration": "Very High",
-    "frustration_reason": "Lack of timely resolution and agent's unhelpful response"
+    "frustration_reason": "Lack of resolution and poor agent response",
+    "rating": 1.0
   },
   "agent_quality": {
     "language_clarity": 10,
@@ -24,58 +24,84 @@
     "response_efficiency": 5,
     "empathy_score": 1.0,
     "bias_detected": false,
-    "bias_notes": "None",
-    "empathy_phrases_used": [],
-    "calmed_customer": false
+    "calmed_customer": false,
+    "empathy_phrases_used": []
   },
   "dimension_scores": {
     "empathy": 2,
-    "professionalism": 5,
-    "compliance": 8,
-    "resolution_effectiveness": 2,
+    "professionalism": 4,
+    "compliance": 6,
+    "resolution_effectiveness": 1,
     "communication_clarity": 6
   },
   "scores": {
     "empathy": 2,
-    "professionalism": 5,
-    "compliance": 8,
-    "resolution_effectiveness": 2,
+    "professionalism": 4,
+    "compliance": 6,
+    "resolution_effectiveness": 1,
     "communication_clarity": 6
   },
   "model_metrics": {
-    "precision": 0.9,
-    "recall": 0.8,
-    "f1_score": 0.85,
+    "precision": 0.8,
+    "recall": 0.7,
+    "f1_score": 0.75,
     "confidence": 0.9,
-    "notes": "High confidence in detection accuracy due to clear customer frustration and agent's inadequate response"
+    "notes": "Agent failed to follow escalation policy"
   },
   "violations": [
     {
-      "type": "Lack of Empathy",
-      "quote": "Try restarting it again",
+      "type": "Escalation Policy Violation",
       "severity": "high",
-      "explanation": "Agent failed to acknowledge customer's previous attempts and showed no understanding of their frustration"
+      "quote": "I can raise a ticket. Manager response in 48 hours.",
+      "explanation": "The agent did not offer to escalate the issue to a manager immediately, despite the customer's repeated requests for help."
     },
     {
-      "type": "Inadequate Resolution",
-      "quote": "That is our response time",
+      "type": "Repeat Contact Escalation Violation",
       "severity": "high",
-      "explanation": "Agent did not provide a timely solution or offer alternative options to resolve the customer's issue"
+      "quote": "Try restarting it again.",
+      "explanation": "The agent did not escalate the issue to a senior agent or supervisor, despite the customer mentioning they had called twice before about the same issue."
     }
   ],
   "improvements": [
     {
       "area": "Empathy and Active Listening",
-      "suggestion": "Acknowledge customer's previous attempts and show understanding of their frustration",
-      "example": "I apologize for the inconvenience you've experienced, and I understand that restarting the router hasn't resolved the issue. Let me see what else I can do to help."
+      "suggestion": "The agent should have acknowledged the customer's frustration and apologized for the inconvenience.",
+      "example": "I understand how frustrating it must be to have your internet cut out every few hours, especially when you work from home."
     },
     {
-      "area": "Resolution Effectiveness",
-      "suggestion": "Offer alternative solutions or escalate the issue to a supervisor",
-      "example": "I'm going to escalate this issue to my supervisor to see if we can provide a more timely solution. Can you please hold for just a moment?"
+      "area": "Resolution and Escalation",
+      "suggestion": "The agent should have offered to escalate the issue to a manager or senior agent immediately.",
+      "example": "I'm going to go ahead and escalate this issue to my manager, and they will be in touch with you within the next 24 hours."
+    },
+    {
+      "area": "Communication Clarity",
+      "suggestion": "The agent should have clearly explained the next steps and provided a specific timeframe for resolution.",
+      "example": "I'm going to go ahead and raise a ticket for this issue, and our team will be in touch with you within the next 24 hours to provide an update on the status of your issue."
     }
   ],
-  "highlights": [],
+  "highlights": [
+    "The agent did attempt to offer a solution by suggesting the customer restart their router."
+  ],
+  "compliance_alerts": [
+    {
+      "level": "CRITICAL",
+      "message": "Score critically low: 20/100 (Grade F)",
+      "score": 20,
+      "time": "13:08:39"
+    },
+    {
+      "level": "HIGH",
+      "message": "[HIGH] Escalation Policy Violation \u2014 The agent did not offer to escalate the issue to a manager immediately, despite the customer's repea",
+      "quote": "I can raise a ticket. Manager response in 48 hours.",
+      "time": "13:08:39"
+    },
+    {
+      "level": "HIGH",
+      "message": "[HIGH] Repeat Contact Escalation Violation \u2014 The agent did not escalate the issue to a senior agent or supervisor, despite the customer mentionin",
+      "quote": "Try restarting it again.",
+      "time": "13:08:39"
+    }
+  ],
   "_source": "chat_07.txt",
   "_type": "live_upload"
 }

@@ -1,72 +1,70 @@
 {
-  "summary": "The customer support conversation was generally effective in resolving the customer's issue with a broken jacket, but the agent could have been more empathetic and provided more detailed information. The customer's issue was resolved, but they expressed frustration with the refund process time frame.",
+  "summary": "The customer wanted to return a jacket with a broken zipper and the agent assisted with the return process. The customer was somewhat dissatisfied with the refund timeline.",
   "sentiment": "neutral",
   "performance": "average",
-  "issue": "The agent could have shown more empathy towards the customer's frustration with the refund process time frame.",
-  "resolution": "The agent could have acknowledged the customer's frustration and provided more detailed information about the refund process.",
-  "overall_score": 72,
+  "issue": "No violations",
+  "resolution": "Use phrases that acknowledge the customer's frustration",
+  "overall_score": 68,
   "grade": "C",
   "call_outcome": "Resolved",
   "was_resolved": true,
-  "issue_detected": "The customer's jacket broke after wearing it twice and they wanted to return it.",
+  "issue_detected": "Jacket zipper broke after wearing it twice",
   "satisfaction": {
-    "rating": 3.5,
-    "sentiment": "Neutral",
-    "sentiment_score": 0.6,
-    "emotional_stability": "Good",
+    "sentiment": "neutral",
+    "sentiment_score": 0.5,
+    "emotional_stability": "Fair",
     "customer_frustration": "Medium",
-    "frustration_reason": "Refund process time frame"
+    "frustration_reason": "Refund timeline",
+    "rating": 3.0
   },
   "agent_quality": {
-    "language_clarity": 16,
+    "language_clarity": 15,
     "professionalism": 18,
-    "time_efficiency": 19,
-    "response_efficiency": 17,
-    "empathy_score": 4.2,
+    "time_efficiency": 12,
+    "response_efficiency": 10,
+    "empathy_score": 4.0,
     "bias_detected": false,
-    "bias_notes": "None",
-    "empathy_phrases_used": [],
-    "calmed_customer": false
+    "calmed_customer": false,
+    "empathy_phrases_used": []
   },
   "dimension_scores": {
     "empathy": 4,
     "professionalism": 8,
     "compliance": 9,
-    "resolution_effectiveness": 8,
-    "communication_clarity": 7
+    "resolution_effectiveness": 7,
+    "communication_clarity": 6
   },
   "scores": {
     "empathy": 4,
     "professionalism": 8,
     "compliance": 9,
-    "resolution_effectiveness": 8,
-    "communication_clarity": 7
+    "resolution_effectiveness": 7,
+    "communication_clarity": 6
   },
   "model_metrics": {
-    "precision": 0.9,
-    "recall": 0.85,
-    "f1_score": 0.875,
-    "confidence": 0.92,
-    "notes": "The model is confident in its analysis, but there may be some minor errors in sentiment detection and empathy scoring."
+    "precision": 0.8,
+    "recall": 0.7,
+    "f1_score": 0.75,
+    "confidence": 0.9,
+    "notes": "Agent followed standard return procedure"
   },
-  "violations": [
-    {
-      "type": "Lack of Empathy",
-      "quote": "Agent says, no. That is standard.",
-      "severity": "medium",
-      "explanation": "The agent could have shown more empathy towards the customer's frustration with the refund process time frame."
-    }
-  ],
+  "violations": [],
   "improvements": [
     {
-      "area": "Empathy and Communication",
-      "suggestion": "The agent could have acknowledged the customer's frustration and provided more detailed information about the refund process.",
-      "example": "I understand your concern about the refund process time frame. I can assure you that we will process your refund as soon as possible after receiving the returned item."
+      "area": "Empathy",
+      "suggestion": "Use phrases that acknowledge the customer's frustration",
+      "example": "I understand that a broken zipper can be frustrating"
+    },
+    {
+      "area": "Communication Clarity",
+      "suggestion": "Provide more detailed explanations of the return process",
+      "example": "You will receive a return label via email and can expect a refund within 7-10 days"
     }
   ],
   "highlights": [
-    "The agent was efficient in providing a return label and explaining the return process."
+    "The agent followed the standard return procedure and provided the customer with a return label"
   ],
+  "compliance_alerts": [],
   "_source": "call_05.mp3",
   "_type": "live_upload"
 }

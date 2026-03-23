@@ -1,5 +1,5 @@
 {
-  "summary": "The customer received a wrong meal order and was upset, but the agent resolved the issue promptly by offering a replacement and a refund, along with a credit for the inconvenience. The customer was satisfied with the resolution and thanked the agent for the quick response.",
+  "summary": "The customer received a wrong meal order and the agent promptly resolved the issue by offering a replacement and a refund. The customer was satisfied with the resolution.",
   "sentiment": "positive",
   "performance": "excellent",
   "issue": "No violations",
@@ -8,55 +8,39 @@
   "grade": "A",
   "call_outcome": "Resolved",
   "was_resolved": true,
-  "issue_detected": "The customer received a wrong meal order, a meat dish instead of a vegetarian meal",
+  "issue_detected": "Wrong meal order",
   "satisfaction": {
-    "rating": 4.8,
-    "sentiment": "Positive",
-    "sentiment_score": 0.9,
-    "emotional_stability": "Excellent",
-    "customer_frustration": "Low",
-    "frustration_reason": "Initial mistake with the order"
+    "customer_satisfaction": 9,
+    "agent_performance": 9
   },
   "agent_quality": {
-    "language_clarity": 19,
-    "professionalism": 20,
-    "time_efficiency": 20,
-    "response_efficiency": 20,
-    "empathy_score": 9.5,
-    "bias_detected": false,
-    "bias_notes": "None",
-    "empathy_phrases_used": [
-      "I am sincerely sorry",
-      "I am really sorry for this mistake"
-    ],
-    "calmed_customer": true
+    "empathy": 9,
+    "professionalism": 9,
+    "knowledge": 8
   },
   "dimension_scores": {
-    "empathy": 10,
-    "professionalism": 10,
-    "compliance": 10,
-    "resolution_effectiveness": 10,
-    "communication_clarity": 10
+    "empathy": 90,
+    "professionalism": 95,
+    "compliance": 100,
+    "resolution_effectiveness": 95,
+    "communication_clarity": 95
   },
   "scores": {
-    "empathy": 10,
-    "professionalism": 10,
-    "compliance": 10,
-    "resolution_effectiveness": 10,
-    "communication_clarity": 10
+    "empathy": 90,
+    "professionalism": 95,
+    "compliance": 100,
+    "resolution_effectiveness": 95,
+    "communication_clarity": 95
   },
   "model_metrics": {
-    "precision": 0.98,
-    "recall": 0.99,
-    "f1_score": 0.985,
-    "confidence": 0.99,
-    "notes": "High confidence in analysis due to clear and concise conversation"
+    "confidence": 0.92,
+    "tokens_used": 156
   },
   "violations": [],
   "improvements": [],
   "highlights": [
-    "Agent offered a replacement and a refund, along with a credit for the inconvenience",
-    "Agent apologized sincerely and showed empathy towards the customer"
+    "The agent apologized and took immediate action to resolve the issue.",
+    "The agent offered a replacement and a refund, and also added a credit for the inconvenience."
   ],
   "_source": "chat_04.txt",
   "_type": "live_upload"

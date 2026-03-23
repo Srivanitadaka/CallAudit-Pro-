@@ -6,169 +6,396 @@
   <title>CallAudit Pro — Support Quality Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #080c14;
+      --surface:   #0d1320;
+      --surface2:  #111827;
+      --border:    #1e293b;
+      --border2:   #243044;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --accent:    #38bdf8;
+      --green:     #22c55e;
+      --yellow:    #f59e0b;
+      --orange:    #fb923c;
+      --red:       #f87171;
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.6; min-height:100vh; }
+    .bg-grid {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image: linear-gradient(rgba(56,189,248,.03) 1px,transparent 1px), linear-gradient(90deg,rgba(56,189,248,.03) 1px,transparent 1px);
+      background-size:40px 40px;
+    }
+    .shell { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 24px 60px; }
+
+    /* TOPBAR */
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:40px; }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .brand-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .brand-name { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:-.5px; }
+    .brand-name em { color:var(--accent); font-style:normal; }
+    .topbar-right { display:flex; align-items:center; gap:12px; }
+    .model-tag { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 10px; }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
+    .status-dot.busy { background:var(--yellow); box-shadow:0 0 8px var(--yellow); animation:pulse 1s infinite; }
+    .nav-link { color:var(--muted); text-decoration:none; font-size:13px; padding:6px 12px; border:1px solid var(--border); border-radius:6px; transition:color .2s,border-color .2s; }
+    .nav-link:hover { color:var(--accent); border-color:var(--accent); }
+
+    /* UPLOAD */
+    .upload-section { margin-bottom:40px; }
+    .upload-label { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; margin-bottom:20px; letter-spacing:-.5px; background:linear-gradient(135deg,#e2e8f0,var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .upload-card { border:1.5px dashed var(--border2); border-radius:var(--radius); background:var(--surface); padding:32px; transition:border-color .2s,background .2s; cursor:pointer; }
+    .upload-card.drag { border-color:var(--accent); background:#0d1f30; }
+    .upload-inner { display:flex; align-items:center; gap:20px; }
+    .upload-glyph { font-size:32px; width:64px; height:64px; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius); display:grid; place-items:center; flex-shrink:0; color:var(--accent); }
+    .upload-text { display:flex; flex-direction:column; gap:4px; }
+    .upload-text strong { font-size:16px; font-weight:600; }
+    .upload-text span { color:var(--muted); font-size:13px; }
+    .pick-link { color:var(--accent); cursor:pointer; text-decoration:underline; }
+    .upload-formats { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px; }
+    .file-chosen { margin-top:12px; padding:8px 14px; background:var(--surface2); border-radius:var(--radius-sm); font-size:13px; color:var(--accent); border:1px solid var(--border2); }
+    .btn-row { display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
+    .btn-analyze { padding:14px 40px; background:var(--accent); color:#080c14; border:none; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-size:15px; font-weight:800; cursor:pointer; letter-spacing:.3px; transition:opacity .2s,transform .1s; display:flex; align-items:center; gap:10px; }
+    .btn-analyze:hover { opacity:.9; transform:translateY(-1px); }
+    .btn-analyze:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .spinner { width:18px; height:18px; border:2px solid rgba(0,0,0,.2); border-top-color:#080c14; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* PDF BUTTON */
+    .btn-pdf {
+      padding:13px 24px; background:transparent;
+      border:1px solid var(--accent); border-radius:var(--radius-sm);
+      color:var(--accent); font-family:'Syne',sans-serif;
+      font-size:13px; font-weight:700; cursor:pointer;
+      transition:background .2s; display:none; align-items:center; gap:8px;
+    }
+    .btn-pdf:hover { background:rgba(56,189,248,.1); }
+    .btn-pdf.visible { display:flex; }
+
+    /* OVERVIEW */
+    .overview-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+    .ov-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; }
+    .ov-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
+    .ov-big { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; line-height:1; margin-bottom:12px; }
+    .ov-bar-wrap { height:4px; background:var(--border2); border-radius:2px; overflow:hidden; }
+    .ov-bar { height:100%; border-radius:2px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+    .ov-stars { display:flex; gap:4px; font-size:22px; }
+    .star.full  { color:#f59e0b; }
+    .star.half  { color:#f59e0b; opacity:.5; }
+    .star.empty { color:var(--border2); }
+    .ov-outcome { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; margin-bottom:8px; }
+    .ov-outcome.resolved   { color:var(--green); }
+    .ov-outcome.unresolved { color:var(--red); }
+    .ov-grade { display:inline-block; padding:4px 14px; border-radius:6px; border:1px solid; font-family:'Syne',sans-serif; font-size:14px; font-weight:800; }
+
+    /* PANELS */
+    .panels { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    .panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; }
+    .panel-head { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+    .violations-head { color:var(--red) !important; }
+
+    /* METRIC ROWS */
+    .metric-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:12px; font-size:13px; }
+    .metric-row:last-child { border-bottom:none; }
+    .metric-label { color:var(--muted); flex-shrink:0; }
+    .metric-val { font-weight:500; text-align:right; }
+    .metric-val.accent { color:var(--accent); }
+    .metric-val.small { font-size:12px; max-width:160px; text-align:right; }
+    .metric-bar-wrap { flex:1; height:4px; background:var(--border2); border-radius:2px; overflow:hidden; }
+    .metric-bar { height:100%; border-radius:2px; transition:width .6s; }
+    .metric-num { font-family:'DM Mono',monospace; font-size:12px; width:36px; text-align:right; }
+
+    /* AGENT BARS */
+    .agent-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .agent-row:last-of-type { border-bottom:none; }
+    .agent-label { font-size:12px; color:var(--muted); width:140px; flex-shrink:0; }
+    .agent-bar-wrap { flex:1; height:6px; background:var(--border2); border-radius:3px; overflow:hidden; }
+    .agent-bar { height:100%; border-radius:3px; transition:width .6s; }
+    .agent-num { font-family:'DM Mono',monospace; font-size:11px; width:44px; text-align:right; }
+    .agent-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+    .pill { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid; }
+    .pill-good { color:var(--green); border-color:#22c55e44; background:#22c55e11; }
+    .pill-bad  { color:var(--red);   border-color:#f8717144; background:#f8717111; }
+    .pill-warn { color:var(--yellow);border-color:#f59e0b44; background:#f59e0b11; }
+    .empathy-phrases { margin-top:16px; }
+    .ep-label { font-size:11px; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+    .ep-list { display:flex; flex-wrap:wrap; gap:6px; }
+    .ep-chip { padding:3px 10px; background:var(--surface2); border:1px solid var(--border2); border-radius:4px; font-size:12px; color:var(--accent); }
+
+    /* DIMENSIONS */
+    .dim-section { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; margin-bottom:20px; }
+    .section-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .dim-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+    .dim-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px 16px; text-align:center; transition:border-color .2s,transform .2s; }
+    .dim-card:hover { border-color:var(--border2); transform:translateY(-2px); }
+    .dim-icon { font-size:24px; margin-bottom:8px; }
+    .dim-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .dim-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; line-height:1; margin-bottom:10px; }
+    .dim-val span { font-size:14px; color:var(--muted); font-weight:400; }
+    .dim-track { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .dim-bar { height:100%; border-radius:2px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+
+    /* VIOLATIONS */
+    .vbadge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:11px; background:var(--red); color:#fff; font-size:11px; font-weight:700; padding:0 6px; margin-left:8px; vertical-align:middle; }
+    .viol-card { border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; border-left:4px solid; position:relative; overflow:hidden; transition:transform .15s; }
+    .viol-card:hover { transform:translateX(2px); }
+    .viol-card:last-child { margin-bottom:0; }
+    .viol-card.sev-critical { background:rgba(248,113,113,.08); border-left-color:#f87171; }
+    .viol-card.sev-high     { background:rgba(251,146,60,.08);  border-left-color:#fb923c; }
+    .viol-card.sev-medium   { background:rgba(245,158,11,.08);  border-left-color:#f59e0b; }
+    .viol-card.sev-low      { background:rgba(100,116,139,.08); border-left-color:#64748b; }
+    .viol-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+    .viol-type { font-weight:600; font-size:13px; text-transform:capitalize; }
+    .sev-badge { padding:2px 10px; border-radius:4px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.5px; flex-shrink:0; }
+    .sev-badge.critical { background:rgba(248,113,113,.2); color:#f87171; }
+    .sev-badge.high     { background:rgba(251,146,60,.2);  color:#fb923c; }
+    .sev-badge.medium   { background:rgba(245,158,11,.2);  color:#f59e0b; }
+    .sev-badge.low      { background:rgba(100,116,139,.2); color:#94a3b8; }
+    .viol-quote { font-family:'DM Mono',monospace; font-size:12px; color:var(--red); opacity:.8; background:rgba(248,113,113,.06); border-radius:4px; padding:6px 10px; margin-bottom:8px; border-left:2px solid rgba(248,113,113,.3); }
+    .viol-explain { font-size:13px; color:#94a3b8; line-height:1.5; }
+
+    /* IMPROVEMENTS */
+    .imp-card { background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:var(--radius-sm); padding:16px; margin-bottom:10px; transition:transform .15s; }
+    .imp-card:hover { transform:translateX(2px); }
+    .imp-card:last-child { margin-bottom:0; }
+    .imp-area { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--accent); font-weight:700; margin-bottom:6px; }
+    .imp-sug { font-size:13px; color:var(--text); line-height:1.5; }
+    .imp-ex { margin-top:8px; font-size:12px; color:var(--muted); padding:6px 10px; background:rgba(56,189,248,.06); border-radius:4px; border-left:2px solid rgba(56,189,248,.3); }
+
+    /* COMPLIANCE ALERTS */
+    .alerts-section { margin-bottom:20px; }
+    .alert-item { padding:14px 16px; border-radius:var(--radius-sm); margin-bottom:8px; border-left:4px solid; }
+    .alert-item:last-child { margin-bottom:0; }
+    .alert-critical { background:rgba(248,113,113,.1); border-left-color:var(--red); }
+    .alert-high     { background:rgba(251,146,60,.1);  border-left-color:var(--orange); }
+    .alert-warning  { background:rgba(245,158,11,.1);  border-left-color:var(--yellow); }
+    .alert-level { font-size:10px; font-family:'DM Mono',monospace; font-weight:700; letter-spacing:1px; margin-bottom:4px; }
+    .alert-msg { font-size:13px; color:var(--text); }
+
+    /* MODEL METRICS */
+    .f1-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .f1-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; }
+    .f1-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .f1-val { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; margin-bottom:6px; }
+    .f1-track { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .f1-bar { height:100%; border-radius:2px; transition:width .6s; }
+    .f1-note { font-size:12px; color:var(--muted); margin-top:12px; font-style:italic; }
+
+    /* SUMMARY */
+    .summary-text { font-size:14px; line-height:1.7; color:#94a3b8; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+    .issue-row { display:flex; align-items:flex-start; gap:10px; }
+    .issue-lbl { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:3px 8px; flex-shrink:0; margin-top:2px; }
+    .issue-val { font-size:13px; color:var(--text); line-height:1.5; }
+
+    /* EMPTY STATE */
+    .empty-state { color:var(--green); font-size:13px; padding:20px 0; text-align:center; opacity:.7; }
+
+    /* TRANSCRIPT */
+    .transcript-section { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; margin-bottom:20px; }
+    .transcript-box { display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; }
+    .tline { padding:10px 14px; border-radius:var(--radius-sm); font-size:13px; line-height:1.5; }
+    .tline.agent    { background:#0d1f30; border-left:3px solid var(--accent); }
+    .tline.customer { background:#1a1020; border-left:3px solid #a78bfa; }
+    .trole { display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-right:8px; opacity:.6; }
+
+    /* HIGHLIGHTS */
+    .highlights-box { display:flex; flex-direction:column; gap:8px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:20px; }
+    .h-item { padding:10px 14px; background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2); border-radius:var(--radius-sm); font-size:13px; color:#86efac; line-height:1.5; }
+
+    /* BATCH TABLE */
+    .batch-section { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; margin-top:32px; }
+    .batch-msg { color:var(--muted); font-size:13px; padding:20px 0; text-align:center; }
+    .refresh-btn { cursor:pointer; color:var(--muted); font-size:18px; transition:color .2s; display:inline-block; margin-left:8px; }
+    .refresh-btn:hover { color:var(--accent); }
+    .stats-strip { display:flex; gap:24px; flex-wrap:wrap; padding:16px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:20px; }
+    .stat-item { text-align:center; }
+    .stat-val { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; line-height:1; }
+    .stat-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+    .tbl-wrap { overflow-x:auto; }
+    .rtable { width:100%; border-collapse:collapse; }
+    .rtable th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:10px 12px; border-bottom:1px solid var(--border); font-weight:600; }
+    .trow { cursor:pointer; border-bottom:1px solid var(--border); transition:background .15s; }
+    .trow:hover { background:var(--surface2); }
+    .trow td { padding:12px; font-size:13px; vertical-align:middle; }
+    .td-name { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); max-width:200px; }
+    .gbadge { display:inline-block; padding:2px 10px; border-radius:4px; border:1px solid; font-family:'Syne',sans-serif; font-size:13px; font-weight:800; }
+    .si { display:flex; align-items:center; gap:8px; }
+    .sn { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; width:28px; }
+    .mb { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; min-width:60px; }
+    .mbb { height:100%; border-radius:2px; }
+    .yes { color:var(--green); }
+    .no  { color:var(--red); }
+    .vbadge2 { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:11px; background:rgba(248,113,113,.15); color:var(--red); font-size:12px; font-weight:700; padding:0 6px; border:1px solid rgba(248,113,113,.3); }
+    .noviol { color:var(--green); opacity:.6; }
+    .type-tag { font-size:11px; padding:2px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:4px; color:var(--muted); }
+    .pdf-link { color:var(--accent); font-size:11px; text-decoration:none; padding:2px 8px; border:1px solid rgba(56,189,248,.3); border-radius:4px; }
+    .pdf-link:hover { background:rgba(56,189,248,.1); }
+    .btn-excel {
+      padding:8px 18px; background:transparent;
+      border:1px solid var(--green); border-radius:var(--radius-sm);
+      color:var(--green); font-family:'Syne',sans-serif;
+      font-size:12px; font-weight:700; cursor:pointer;
+      text-decoration:none; transition:background .2s;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-excel:hover { background:rgba(34,197,94,.1); }
+
+    /* ROW DETAIL */
+    .row-detail { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:20px; margin-top:12px; }
+    .rd-head { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .rd-close { margin-left:auto; cursor:pointer; color:var(--muted); font-size:16px; transition:color .2s; }
+    .rd-close:hover { color:var(--red); }
+    .rd-summary { font-size:13px; color:#94a3b8; line-height:1.6; margin-bottom:12px; }
+    .rd-issue { display:flex; align-items:flex-start; gap:8px; margin-bottom:16px; }
+    .rd-dim { display:flex; align-items:center; gap:10px; padding:6px 0; }
+    .rd-dim-l { font-size:12px; color:var(--muted); width:120px; flex-shrink:0; }
+    .rd-bar-w { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .rd-bar { height:100%; border-radius:2px; }
+    .rd-dim-v { font-family:'DM Mono',monospace; font-size:11px; width:40px; text-align:right; }
+
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:var(--surface); }
+    ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+    @media (max-width:768px) {
+      .overview-strip { grid-template-columns:1fr; }
+      .panels         { grid-template-columns:1fr; }
+      .dim-grid       { grid-template-columns:repeat(2,1fr); }
+      .f1-grid        { grid-template-columns:1fr; }
+    }
+  </style>
 </head>
 <body>
-
-<!-- Background grid -->
 <div class="bg-grid"></div>
-
 <div class="shell">
 
-  <!-- ── HEADER ─────────────────────────────────── -->
+  <!-- HEADER -->
   <header class="topbar">
     <div class="brand">
       <span class="brand-dot"></span>
       <span class="brand-name">CallAudit <em>Pro</em></span>
     </div>
     <div class="topbar-right">
-      <span class="model-tag">llama-3.3-70b · Groq</span>
+      <a href="/live" class="nav-link">🔴 Live Monitor</a>
+      <span class="model-tag">llama-3.3-70b · Groq · LangChain</span>
       <span class="status-dot" id="statusDot"></span>
     </div>
   </header>
 
-  <main class="main">
+  <main>
 
-    <!-- ── UPLOAD SECTION ─────────────────────────── -->
-    <section class="upload-section" id="uploadSection">
+    <!-- UPLOAD -->
+    <section class="upload-section">
       <div class="upload-label">Customer Support Call Auditing System</div>
       <div class="upload-card" id="dropZone">
         <div class="upload-inner">
           <div class="upload-glyph">⬆</div>
           <div class="upload-text">
             <strong>Upload Call Recording or Transcript</strong>
-            <span>Drag & drop or <label for="fileInput" class="pick-link">choose file</label></span>
+            <span>Drag &amp; drop or <label for="fileInput" class="pick-link">choose file</label></span>
+            <span class="upload-formats">mp3 · m4a · wav · txt · json</span>
           </div>
-          <input type="file" id="fileInput" name="file"
-                 accept=".txt,.json,.mp3,.wav,.m4a,.mp4,.flac" hidden>
-          <div class="upload-formats">mp3 · m4a · wav · txt · json</div>
+          <input type="file" id="fileInput" name="file" accept=".txt,.json,.mp3,.wav,.m4a,.mp4,.flac" hidden>
         </div>
         <div id="fileChosen" class="file-chosen" style="display:none;"></div>
       </div>
-
       <form id="uploadForm" enctype="multipart/form-data">
-        <button class="btn-analyze" type="submit" id="analyzeBtn">
-          <span id="btnText">Analyze &amp; Score</span>
-          <span id="btnSpinner" class="spinner" style="display:none;"></span>
-        </button>
+        <div class="btn-row">
+          <button class="btn-analyze" type="submit" id="analyzeBtn">
+            <span id="btnText">Analyze &amp; Score</span>
+            <span id="btnSpinner" class="spinner" style="display:none;"></span>
+          </button>
+          <button class="btn-pdf" id="btnPDF" type="button" onclick="downloadPDF()">
+            ⬇ Download PDF Report
+          </button>
+        </div>
       </form>
     </section>
 
-    <!-- ── RESULTS (hidden until analysis) ────────── -->
+    <!-- RESULTS -->
     <div id="results" style="display:none;">
 
-      <!-- 1. Overall Summary Cards -->
+      <!-- Overview -->
       <section class="overview-strip">
-        <div class="ov-card" id="ovScore">
+        <div class="ov-card">
           <div class="ov-label">Overall Score</div>
           <div class="ov-big" id="ovScoreVal">—</div>
           <div class="ov-bar-wrap"><div class="ov-bar" id="ovBar"></div></div>
         </div>
-        <div class="ov-card" id="ovSat">
+        <div class="ov-card">
           <div class="ov-label">Customer Satisfaction</div>
           <div class="ov-big" id="ovSatVal">—</div>
           <div class="ov-stars" id="ovStars"></div>
         </div>
-        <div class="ov-card" id="ovOutcome">
+        <div class="ov-card">
           <div class="ov-label">Call Outcome</div>
           <div class="ov-outcome" id="ovOutcomeVal">—</div>
           <div class="ov-grade" id="ovGrade">—</div>
         </div>
       </section>
 
-      <!-- 2. Middle panels -->
-      <section class="panels">
+      <!-- Compliance Alerts -->
+      <section class="alerts-section" id="alertsSection" style="display:none;">
+        <div class="panel">
+          <div class="panel-head" style="color:var(--red)">
+            🚨 Compliance Alerts
+            <span class="vbadge" id="alertBadge"></span>
+          </div>
+          <div id="alertsList"></div>
+        </div>
+      </section>
 
-        <!-- LEFT: Satisfaction -->
+      <!-- Satisfaction + Agent -->
+      <section class="panels">
         <div class="panel">
           <div class="panel-head">Customer Satisfaction Metrics</div>
-          <div class="metric-row">
-            <span class="metric-label">Sentiment</span>
-            <span class="metric-val" id="mSentiment">—</span>
-          </div>
+          <div class="metric-row"><span class="metric-label">Sentiment</span><span class="metric-val" id="mSentiment">—</span></div>
           <div class="metric-row">
             <span class="metric-label">Sentiment Score</span>
-            <div class="metric-bar-wrap">
-              <div class="metric-bar" id="mSentimentBar"></div>
-            </div>
+            <div class="metric-bar-wrap"><div class="metric-bar" id="mSentimentBar"></div></div>
             <span class="metric-num" id="mSentimentScore">—</span>
           </div>
-          <div class="metric-row">
-            <span class="metric-label">Emotional Stability</span>
-            <span class="metric-val" id="mStability">—</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Customer Frustration</span>
-            <span class="metric-val" id="mFrustration">—</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Frustration Reason</span>
-            <span class="metric-val small" id="mFrustReason">—</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Satisfaction Rating</span>
-            <span class="metric-val accent" id="mRating">— / 5</span>
-          </div>
+          <div class="metric-row"><span class="metric-label">Emotional Stability</span><span class="metric-val" id="mStability">—</span></div>
+          <div class="metric-row"><span class="metric-label">Customer Frustration</span><span class="metric-val" id="mFrustration">—</span></div>
+          <div class="metric-row"><span class="metric-label">Frustration Reason</span><span class="metric-val small" id="mFrustReason">—</span></div>
+          <div class="metric-row"><span class="metric-label">Satisfaction Rating</span><span class="metric-val accent" id="mRating">— / 5</span></div>
         </div>
-
-        <!-- RIGHT: Agent Quality -->
         <div class="panel">
           <div class="panel-head">Agent Quality Assessment</div>
-
-          <div class="agent-row">
-            <span class="agent-label">Language Clarity</span>
-            <div class="agent-bar-wrap"><div class="agent-bar" id="aLang"></div></div>
-            <span class="agent-num" id="aLangNum">—/20</span>
-          </div>
-          <div class="agent-row">
-            <span class="agent-label">Professionalism</span>
-            <div class="agent-bar-wrap"><div class="agent-bar" id="aProf"></div></div>
-            <span class="agent-num" id="aProfNum">—/20</span>
-          </div>
-          <div class="agent-row">
-            <span class="agent-label">Time Efficiency</span>
-            <div class="agent-bar-wrap"><div class="agent-bar" id="aTime"></div></div>
-            <span class="agent-num" id="aTimeNum">—/20</span>
-          </div>
-          <div class="agent-row">
-            <span class="agent-label">Response Efficiency</span>
-            <div class="agent-bar-wrap"><div class="agent-bar" id="aResp"></div></div>
-            <span class="agent-num" id="aRespNum">—/20</span>
-          </div>
-          <div class="agent-row">
-            <span class="agent-label">Empathy Score</span>
-            <div class="agent-bar-wrap"><div class="agent-bar" id="aEmp"></div></div>
-            <span class="agent-num" id="aEmpNum">—/10</span>
-          </div>
-
+          <div class="agent-row"><span class="agent-label">Language Clarity</span><div class="agent-bar-wrap"><div class="agent-bar" id="aLang"></div></div><span class="agent-num" id="aLangNum">—/20</span></div>
+          <div class="agent-row"><span class="agent-label">Professionalism</span><div class="agent-bar-wrap"><div class="agent-bar" id="aProf"></div></div><span class="agent-num" id="aProfNum">—/20</span></div>
+          <div class="agent-row"><span class="agent-label">Time Efficiency</span><div class="agent-bar-wrap"><div class="agent-bar" id="aTime"></div></div><span class="agent-num" id="aTimeNum">—/20</span></div>
+          <div class="agent-row"><span class="agent-label">Response Efficiency</span><div class="agent-bar-wrap"><div class="agent-bar" id="aResp"></div></div><span class="agent-num" id="aRespNum">—/20</span></div>
+          <div class="agent-row"><span class="agent-label">Empathy Score</span><div class="agent-bar-wrap"><div class="agent-bar" id="aEmp"></div></div><span class="agent-num" id="aEmpNum">—/10</span></div>
           <div class="agent-pills">
             <div class="pill" id="pillBias">— Bias</div>
             <div class="pill" id="pillCalm">— Customer Calmed</div>
           </div>
-
           <div id="empathyPhrases" class="empathy-phrases" style="display:none;">
             <div class="ep-label">Empathy phrases used</div>
             <div id="epList" class="ep-list"></div>
           </div>
         </div>
-
       </section>
 
-      <!-- 3. Dimension Scores -->
+      <!-- Dimension Scores -->
       <section class="dim-section">
         <div class="section-title">Dimension Scores</div>
         <div class="dim-grid" id="dimGrid"></div>
       </section>
 
-      <!-- 4. F1 / Model Metrics -->
+      <!-- Model Metrics + Summary -->
       <section class="panels" style="margin-top:0">
         <div class="panel">
           <div class="panel-head">Classification Confidence Metrics</div>
           <div class="f1-grid" id="f1Grid"></div>
           <div class="f1-note" id="f1Note"></div>
         </div>
-
-        <!-- Summary -->
         <div class="panel">
           <div class="panel-head">AI Summary</div>
           <div class="summary-text" id="summaryText">—</div>
@@ -179,51 +406,53 @@
         </div>
       </section>
 
-      <!-- 5. Violations + Improvements -->
+      <!-- Violations + Improvements -->
       <section class="panels" style="margin-top:0">
         <div class="panel" id="violPanel">
           <div class="panel-head violations-head">
-            ⚠ Violations <span class="vbadge" id="vbadge"></span>
+            ⚠ Policy Violations
+            <span class="vbadge" id="vbadge" style="display:none;"></span>
           </div>
           <div id="violList"><div class="empty-state">No violations detected ✓</div></div>
         </div>
         <div class="panel">
-          <div class="panel-head">💡 Improvements</div>
+          <div class="panel-head">💡 Coaching Improvements</div>
           <div id="improveList"><div class="empty-state">No improvements needed ✓</div></div>
         </div>
       </section>
 
-      <!-- 6. Transcript Viewer -->
+      <!-- Transcript -->
       <section class="transcript-section" id="transcriptSection" style="display:none;">
         <div class="section-title">Transcript Viewer</div>
         <div class="transcript-box" id="transcriptBox"></div>
       </section>
 
-      <!-- 7. Highlights -->
+      <!-- Highlights -->
       <section id="highlightSection" style="display:none; margin-bottom:24px;">
-        <div class="section-title">✅ What Went Well</div>
+        <div class="section-title" style="margin-bottom:12px;">✅ What Went Well</div>
         <div class="highlights-box" id="highlightsList"></div>
       </section>
 
     </div>
 
-    <!-- ── BATCH TABLE ─────────────────────────────── -->
+    <!-- BATCH TABLE -->
     <section class="batch-section">
       <div class="section-title">
         All Scored Conversations
-        <span class="refresh-btn" onclick="loadResults()" title="Refresh">↻</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <a href="/download_excel" class="btn-excel" target="_blank">⬇ Export Excel</a>
+          <span class="refresh-btn" onclick="loadResults()" title="Refresh">↻</span>
+        </div>
       </div>
       <div id="batchLoading" class="batch-msg">Loading results...</div>
-      <div id="batchEmpty"   class="batch-msg" style="display:none;">
-        No results yet — upload a file above or run <code>python batch_scorer.py</code>
-      </div>
-      <div id="batchTable"   style="display:none;">
+      <div id="batchEmpty" class="batch-msg" style="display:none;">No results yet — upload a file above</div>
+      <div id="batchTable" style="display:none;">
         <div class="stats-strip" id="statsStrip"></div>
         <div class="tbl-wrap">
           <table class="rtable">
             <thead><tr>
               <th>File</th><th>Grade</th><th>Score</th>
-              <th>Satisfaction</th><th>Outcome</th><th>Violations</th><th>Type</th>
+              <th>Sentiment</th><th>Outcome</th><th>Violations</th><th>Type</th><th>PDF</th>
             </tr></thead>
             <tbody id="tblBody"></tbody>
           </table>
@@ -236,57 +465,56 @@
 </div>
 
 <script>
-// ── Colour helpers ─────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────
 const GRADE_C = {A:"#22c55e",B:"#38bdf8",C:"#f59e0b",D:"#fb923c",F:"#f87171"};
 const SENT_C  = {positive:"#22c55e",neutral:"#94a3b8",negative:"#f87171",mixed:"#f59e0b",unknown:"#64748b"};
 
-function scoreColor(v, max=100) {
-  const pct = v/max;
-  if (pct >= 0.75) return "#22c55e";
-  if (pct >= 0.55) return "#f59e0b";
-  return "#f87171";
-}
-function frustColor(f) {
-  return {None:"#22c55e",Low:"#86efac",Medium:"#f59e0b",High:"#fb923c","Very High":"#f87171"}[f] || "#94a3b8";
-}
-function stabilityColor(s) {
-  return {Excellent:"#22c55e",Good:"#86efac",Fair:"#f59e0b",Poor:"#f87171"}[s] || "#94a3b8";
-}
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
+function scoreColor(v,max=100){ const p=v/max; return p>=.75?"#22c55e":p>=.55?"#f59e0b":"#f87171"; }
+function frustColor(f){ return {None:"#22c55e",Low:"#86efac",Medium:"#f59e0b",High:"#fb923c","Very High":"#f87171"}[f]||"#94a3b8"; }
+function stabilityColor(s){ return {Excellent:"#22c55e",Good:"#86efac",Fair:"#f59e0b",Poor:"#f87171"}[s]||"#94a3b8"; }
+function cap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):""; }
+function fmtKey(k){ return (k||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()); }
 
 // ── File picker ────────────────────────────────────────────────────────
 const fileInput = document.getElementById("fileInput");
 fileInput.addEventListener("change", showFile);
 function showFile(){
-  const f = fileInput.files[0]; if(!f) return;
-  const el = document.getElementById("fileChosen");
-  el.textContent = "📄 "+f.name; el.style.display="block";
+  const f=fileInput.files[0]; if(!f) return;
+  document.getElementById("fileChosen").textContent="📄 "+f.name;
+  document.getElementById("fileChosen").style.display="block";
 }
-
-// Drag & drop
-const dz = document.getElementById("dropZone");
-dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("drag"); });
-dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
-dz.addEventListener("drop", e => {
+const dz=document.getElementById("dropZone");
+dz.addEventListener("dragover",  e=>{e.preventDefault();dz.classList.add("drag");});
+dz.addEventListener("dragleave", ()=>dz.classList.remove("drag"));
+dz.addEventListener("drop", e=>{
   e.preventDefault(); dz.classList.remove("drag");
-  const f = e.dataTransfer.files[0]; if(!f) return;
-  const dt = new DataTransfer(); dt.items.add(f);
-  fileInput.files = dt.files; showFile();
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const dt=new DataTransfer(); dt.items.add(f);
+  fileInput.files=dt.files; showFile();
 });
 
+// ── PDF state ──────────────────────────────────────────────────────────
+let _savedFilename = "";
+
+function downloadPDF(){
+  if(!_savedFilename){ alert("No scored result available. Analyze a call first."); return; }
+  window.open(`/download_pdf/${_savedFilename}`, "_blank");
+}
+
 // ── Submit ─────────────────────────────────────────────────────────────
-document.getElementById("uploadForm").addEventListener("submit", async e => {
+document.getElementById("uploadForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const f = fileInput.files[0]; if(!f) return;
+  const f=fileInput.files[0]; if(!f) return;
   setBusy(true);
-  document.getElementById("results").style.display = "none";
-  try {
-    const fd = new FormData(); fd.append("file", f);
-    const res  = await fetch("/analyze_ajax", {method:"POST", body:fd});
+  document.getElementById("results").style.display="none";
+  document.getElementById("btnPDF").classList.remove("visible");
+  try{
+    const fd=new FormData(); fd.append("file",f);
+    const res  = await fetch("/analyze_ajax",{method:"POST",body:fd});
     const data = await res.json();
     renderResults(data, f.name);
     setTimeout(loadResults, 1500);
-  } catch(err){ console.error(err); alert("Analysis failed."); }
+  }catch(err){ console.error(err); alert("Analysis failed."); }
   finally{ setBusy(false); }
 });
 
@@ -297,292 +525,289 @@ function setBusy(on){
   document.getElementById("statusDot").className      = on?"status-dot busy":"status-dot";
 }
 
-// ── Render full dashboard ──────────────────────────────────────────────
-let lastTranscript = "";
+// ── Render results ─────────────────────────────────────────────────────
+function renderResults(d, filename=""){
+  document.getElementById("results").style.display="block";
 
-function renderResults(d, filename="") {
-  document.getElementById("results").style.display = "block";
+  const grade   = d.grade||"F";
+  const overall = d.overall_score||0;
+  const gc      = GRADE_C[grade]||"#64748b";
+  const sat     = d.satisfaction||{};
+  const aq      = d.agent_quality||{};
+  const mm      = d.model_metrics||{};
+  const dims    = d.dimension_scores||d.scores||{};
 
-  const grade   = d.grade || "F";
-  const overall = d.overall_score || 0;
-  const gc      = GRADE_C[grade] || "#64748b";
-  const sat     = d.satisfaction   || {};
-  const aq      = d.agent_quality  || {};
-  const mm      = d.model_metrics  || {};
-  const dims    = d.dimension_scores || d.scores || {};
+  // Show PDF button and store filename
+  if(d._saved_filename){
+    _savedFilename = d._saved_filename;
+    document.getElementById("btnPDF").classList.add("visible");
+  }
 
-  // ── 1. Overview cards ──
+  // Overview
   const ovScore = document.getElementById("ovScoreVal");
-  ovScore.textContent = overall + " / 100";
+  ovScore.textContent = overall+" / 100";
   ovScore.style.color = scoreColor(overall);
-
   const ovBar = document.getElementById("ovBar");
   ovBar.style.width      = overall+"%";
   ovBar.style.background = scoreColor(overall);
 
-  const satRating = sat.rating || 0;
-  document.getElementById("ovSatVal").textContent = satRating.toFixed(1) + " / 5";
-  document.getElementById("ovSatVal").style.color = scoreColor(satRating, 5);
+  const satRating = sat.rating||0;
+  document.getElementById("ovSatVal").textContent = satRating.toFixed(1)+" / 5";
+  document.getElementById("ovSatVal").style.color = scoreColor(satRating,5);
   renderStars(satRating);
 
   const outcomeEl = document.getElementById("ovOutcomeVal");
-  const outcome   = d.call_outcome || (d.was_resolved ? "Resolved" : "Unresolved");
-  outcomeEl.textContent  = outcome;
-  outcomeEl.className    = "ov-outcome " + (d.was_resolved ? "resolved" : "unresolved");
+  outcomeEl.textContent = d.call_outcome||(d.was_resolved?"Resolved":"Unresolved");
+  outcomeEl.className   = "ov-outcome "+(d.was_resolved?"resolved":"unresolved");
 
   const gradeEl = document.getElementById("ovGrade");
-  gradeEl.textContent       = "Grade " + grade;
+  gradeEl.textContent       = "Grade "+grade;
   gradeEl.style.background  = gc+"22";
   gradeEl.style.color       = gc;
   gradeEl.style.borderColor = gc+"44";
 
-  // ── 2. Satisfaction panel ──
-  const sentKey = (sat.sentiment||"neutral").toLowerCase();
-  const sentEl  = document.getElementById("mSentiment");
-  sentEl.textContent = sat.sentiment || "—";
-  sentEl.style.color = SENT_C[sentKey] || "#94a3b8";
+  // Compliance alerts
+  const alerts = d.compliance_alerts||[];
+  if(alerts.length>0){
+    document.getElementById("alertsSection").style.display="block";
+    document.getElementById("alertBadge").textContent = alerts.length;
+    document.getElementById("alertsList").innerHTML = alerts.map(a=>{
+      const lvl   = (a.level||"warning").toLowerCase();
+      const cls   = lvl==="critical"?"alert-critical":lvl==="high"?"alert-high":"alert-warning";
+      const color = lvl==="critical"?"#f87171":lvl==="high"?"#fb923c":"#f59e0b";
+      return `<div class="alert-item ${cls}">
+        <div class="alert-level" style="color:${color}">${(a.level||"").toUpperCase()}</div>
+        <div class="alert-msg">${a.message||""}</div>
+      </div>`;
+    }).join("");
+  } else {
+    document.getElementById("alertsSection").style.display="none";
+  }
 
-  const ss = sat.sentiment_score || 0;
+  // Satisfaction panel
+  const sentKey = (sat.sentiment||d.sentiment||"neutral").toLowerCase();
+  const sentEl  = document.getElementById("mSentiment");
+  sentEl.textContent = sat.sentiment||d.sentiment||"—";
+  sentEl.style.color = SENT_C[sentKey]||"#94a3b8";
+  const ss = sat.sentiment_score||0;
   document.getElementById("mSentimentBar").style.width      = (ss*100)+"%";
   document.getElementById("mSentimentBar").style.background = SENT_C[sentKey]||"#94a3b8";
   document.getElementById("mSentimentScore").textContent    = ss.toFixed(2);
-
   const stabEl = document.getElementById("mStability");
-  stabEl.textContent = sat.emotional_stability || "—";
+  stabEl.textContent = sat.emotional_stability||"—";
   stabEl.style.color = stabilityColor(sat.emotional_stability);
-
   const frustEl = document.getElementById("mFrustration");
-  frustEl.textContent = sat.customer_frustration || "—";
+  frustEl.textContent = sat.customer_frustration||"—";
   frustEl.style.color = frustColor(sat.customer_frustration);
+  document.getElementById("mFrustReason").textContent = sat.frustration_reason||"None";
+  document.getElementById("mRating").textContent = satRating.toFixed(1)+" / 5";
 
-  document.getElementById("mFrustReason").textContent = sat.frustration_reason || "None";
-  document.getElementById("mRating").textContent = satRating.toFixed(1) + " / 5";
-
-  // ── 3. Agent quality panel ──
-  setAgentBar("aLang", "aLangNum", aq.language_clarity,    20);
-  setAgentBar("aProf", "aProfNum", aq.professionalism,      20);
-  setAgentBar("aTime", "aTimeNum", aq.time_efficiency,      20);
-  setAgentBar("aResp", "aRespNum", aq.response_efficiency,  20);
-  setAgentBar("aEmp",  "aEmpNum",  aq.empathy_score,        10, true);
-
+  // Agent panel
+  setAgentBar("aLang","aLangNum", aq.language_clarity,   20);
+  setAgentBar("aProf","aProfNum", aq.professionalism,     20);
+  setAgentBar("aTime","aTimeNum", aq.time_efficiency,     20);
+  setAgentBar("aResp","aRespNum", aq.response_efficiency, 20);
+  setAgentBar("aEmp", "aEmpNum",  aq.empathy_score,       10, true);
   const pillBias = document.getElementById("pillBias");
-  pillBias.textContent  = aq.bias_detected ? "⚠ Bias Detected" : "✔ No Bias";
-  pillBias.className    = "pill " + (aq.bias_detected ? "pill-bad" : "pill-good");
-
+  pillBias.textContent = aq.bias_detected?"⚠ Bias Detected":"✔ No Bias";
+  pillBias.className   = "pill "+(aq.bias_detected?"pill-bad":"pill-good");
   const pillCalm = document.getElementById("pillCalm");
-  pillCalm.textContent  = aq.calmed_customer ? "✔ Customer Calmed" : "✘ Not Calmed";
-  pillCalm.className    = "pill " + (aq.calmed_customer ? "pill-good" : "pill-warn");
-
-  const phrases = aq.empathy_phrases_used || [];
-  if (phrases.length > 0) {
-    document.getElementById("empathyPhrases").style.display = "block";
-    document.getElementById("epList").innerHTML = phrases.map(p => `<span class="ep-chip">"${p}"</span>`).join("");
+  pillCalm.textContent = aq.calmed_customer?"✔ Customer Calmed":"✘ Not Calmed";
+  pillCalm.className   = "pill "+(aq.calmed_customer?"pill-good":"pill-warn");
+  const phrases = aq.empathy_phrases_used||[];
+  if(phrases.length>0){
+    document.getElementById("empathyPhrases").style.display="block";
+    document.getElementById("epList").innerHTML = phrases.map(p=>`<span class="ep-chip">"${p}"</span>`).join("");
   }
 
-  // ── 4. Dimension scores ──
+  // Dimension scores
   const DIM_META = {
-    empathy:                  {label:"Empathy",         icon:"💛"},
-    professionalism:          {label:"Professionalism", icon:"👔"},
-    compliance:               {label:"Compliance",      icon:"🛡"},
-    resolution_effectiveness: {label:"Resolution",      icon:"✅"},
-    communication_clarity:    {label:"Clarity",         icon:"💬"}
+    empathy:{label:"Empathy",icon:"💛"},
+    professionalism:{label:"Professionalism",icon:"👔"},
+    compliance:{label:"Compliance",icon:"🛡"},
+    resolution_effectiveness:{label:"Resolution",icon:"✅"},
+    communication_clarity:{label:"Clarity",icon:"💬"}
   };
   const grid = document.getElementById("dimGrid");
-  grid.innerHTML = "";
-  Object.entries(DIM_META).forEach(([key, meta]) => {
-    const val = dims[key] ?? 0;
-    const col = scoreColor(val, 10);
-    grid.innerHTML += `
-      <div class="dim-card">
-        <div class="dim-icon">${meta.icon}</div>
-        <div class="dim-label">${meta.label}</div>
-        <div class="dim-val" style="color:${col}">${val}<span>/10</span></div>
-        <div class="dim-track"><div class="dim-bar" style="width:${val*10}%;background:${col}"></div></div>
-      </div>`;
+  grid.innerHTML="";
+  Object.entries(DIM_META).forEach(([key,meta])=>{
+    const val=dims[key]??0, col=scoreColor(val,10);
+    grid.innerHTML+=`<div class="dim-card">
+      <div class="dim-icon">${meta.icon}</div>
+      <div class="dim-label">${meta.label}</div>
+      <div class="dim-val" style="color:${col}">${val}<span>/10</span></div>
+      <div class="dim-track"><div class="dim-bar" style="width:${val*10}%;background:${col}"></div></div>
+    </div>`;
   });
 
-  // ── 5. Model metrics ──
-  const f1Items = [
-    {label:"Precision",   val: mm.precision,  fmt: v => v.toFixed(2)},
-    {label:"Recall",      val: mm.recall,     fmt: v => v.toFixed(2)},
-    {label:"F1 Score",    val: mm.f1_score,   fmt: v => v.toFixed(2)},
-    {label:"Confidence",  val: mm.confidence, fmt: v => (v*100).toFixed(0)+"%"},
+  // Model metrics
+  const f1Items=[
+    {label:"Precision",  val:mm.precision,  fmt:v=>v.toFixed(2)},
+    {label:"Recall",     val:mm.recall,     fmt:v=>v.toFixed(2)},
+    {label:"F1 Score",   val:mm.f1_score,   fmt:v=>v.toFixed(2)},
+    {label:"Confidence", val:mm.confidence, fmt:v=>(v*100).toFixed(0)+"%"},
   ];
-  document.getElementById("f1Grid").innerHTML = f1Items.map(item => {
-    const v   = item.val || 0;
-    const col = scoreColor(v, 1);
+  document.getElementById("f1Grid").innerHTML = f1Items.map(item=>{
+    const v=item.val||0, col=scoreColor(v,1);
     return `<div class="f1-card">
       <div class="f1-label">${item.label}</div>
       <div class="f1-val" style="color:${col}">${item.fmt(v)}</div>
       <div class="f1-track"><div class="f1-bar" style="width:${v*100}%;background:${col}"></div></div>
     </div>`;
   }).join("");
-  document.getElementById("f1Note").textContent = mm.notes || "";
+  document.getElementById("f1Note").textContent = mm.notes||"";
 
-  // ── 6. Summary + issue ──
-  document.getElementById("summaryText").textContent = d.summary || "—";
-  document.getElementById("issueVal").textContent    = d.issue_detected || "—";
+  // Summary
+  document.getElementById("summaryText").textContent = d.summary||"—";
+  document.getElementById("issueVal").textContent    = d.issue_detected||"—";
 
-  // ── 7. Violations ──
-  const viols = d.violations || [];
+  // Violations
+  const viols  = d.violations||[];
   const vbadge = document.getElementById("vbadge");
-  vbadge.textContent = viols.length;
-  vbadge.style.display = viols.length > 0 ? "inline" : "none";
-
-  document.getElementById("violList").innerHTML = viols.length > 0
-    ? viols.map(v => `
-        <div class="viol-card sev-${v.severity||'medium'}">
+  vbadge.textContent   = viols.length;
+  vbadge.style.display = viols.length>0?"inline-flex":"none";
+  document.getElementById("violList").innerHTML = viols.length>0
+    ? viols.map(v=>{
+        const sev=(v.severity||"medium").toLowerCase();
+        return `<div class="viol-card sev-${sev}">
           <div class="viol-top">
             <span class="viol-type">${fmtKey(v.type)}</span>
-            <span class="sev-badge ${v.severity}">${(v.severity||"").toUpperCase()}</span>
+            <span class="sev-badge ${sev}">${sev.toUpperCase()}</span>
           </div>
-          ${v.quote ? `<div class="viol-quote">"${v.quote}"</div>` : ""}
+          ${v.quote?`<div class="viol-quote">"${v.quote}"</div>`:""}
           <div class="viol-explain">${v.explanation||""}</div>
-        </div>`).join("")
+        </div>`;
+      }).join("")
     : `<div class="empty-state">No violations detected ✓</div>`;
 
-  // ── 8. Improvements ──
-  const imps = d.improvements || [];
-  document.getElementById("improveList").innerHTML = imps.length > 0
-    ? imps.map(i => `
-        <div class="imp-card">
-          <div class="imp-area">${fmtKey(i.area)}</div>
-          <div class="imp-sug">${i.suggestion||""}</div>
-          ${i.example ? `<div class="imp-ex">💬 <em>${i.example}</em></div>` : ""}
-        </div>`).join("")
+  // Improvements
+  const imps = d.improvements||[];
+  document.getElementById("improveList").innerHTML = imps.length>0
+    ? imps.map(i=>`<div class="imp-card">
+        <div class="imp-area">${fmtKey(i.area)}</div>
+        <div class="imp-sug">${i.suggestion||""}</div>
+        ${i.example?`<div class="imp-ex">💬 <em>${i.example}</em></div>`:""}
+      </div>`).join("")
     : `<div class="empty-state">No improvements suggested ✓</div>`;
 
-  // ── 9. Highlights ──
-  const highs = d.highlights || [];
-  if (highs.length > 0) {
-    document.getElementById("highlightSection").style.display = "block";
-    document.getElementById("highlightsList").innerHTML =
-      highs.map(h => `<div class="h-item">✅ ${h}</div>`).join("");
+  // Highlights
+  const highs = d.highlights||[];
+  if(highs.length>0){
+    document.getElementById("highlightSection").style.display="block";
+    document.getElementById("highlightsList").innerHTML = highs.map(h=>`<div class="h-item">✅ ${h}</div>`).join("");
   }
 
-  // ── 10. Transcript ──
-  if (lastTranscript) showTranscript(lastTranscript);
-
-  document.getElementById("results").scrollIntoView({behavior:"smooth", block:"start"});
+  document.getElementById("results").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-function setAgentBar(barId, numId, val, max, isFloat=false) {
-  const v   = val ?? 0;
-  const col = scoreColor(v, max);
+function setAgentBar(barId,numId,val,max,isFloat=false){
+  const v=val??0, col=scoreColor(v,max);
   document.getElementById(barId).style.width      = (v/max*100)+"%";
   document.getElementById(barId).style.background = col;
-  document.getElementById(numId).textContent       = (isFloat ? v.toFixed(1) : v) + "/" + max;
-  document.getElementById(numId).style.color       = col;
+  document.getElementById(numId).textContent      = (isFloat?v.toFixed(1):v)+"/"+max;
+  document.getElementById(numId).style.color      = col;
 }
 
-function renderStars(rating) {
-  const full = Math.floor(rating);
-  const half = rating - full >= 0.5;
-  let html = "";
-  for (let i=1; i<=5; i++) {
-    if (i <= full)      html += '<span class="star full">★</span>';
-    else if (i===full+1 && half) html += '<span class="star half">★</span>';
-    else                html += '<span class="star empty">☆</span>';
+function renderStars(rating){
+  const full=Math.floor(rating), half=rating-full>=0.5;
+  let html="";
+  for(let i=1;i<=5;i++){
+    if(i<=full)           html+='<span class="star full">★</span>';
+    else if(i===full+1&&half) html+='<span class="star half">★</span>';
+    else                  html+='<span class="star empty">☆</span>';
   }
-  document.getElementById("ovStars").innerHTML = html;
-}
-
-function showTranscript(text) {
-  const lines  = text.split("\n").filter(l => l.trim());
-  const box    = document.getElementById("transcriptBox");
-  box.innerHTML = lines.map(line => {
-    const isAgent    = /^agent:/i.test(line);
-    const isCustomer = /^customer:/i.test(line);
-    if (isAgent)    return `<div class="tline agent"><span class="trole">Agent</span>${line.replace(/^agent:\s*/i,"")}</div>`;
-    if (isCustomer) return `<div class="tline customer"><span class="trole">Customer</span>${line.replace(/^customer:\s*/i,"")}</div>`;
-    return `<div class="tline">${line}</div>`;
-  }).join("");
-  document.getElementById("transcriptSection").style.display = "block";
+  document.getElementById("ovStars").innerHTML=html;
 }
 
 // ── Batch table ────────────────────────────────────────────────────────
-let allResults = [];
-
-async function loadResults() {
-  document.getElementById("batchLoading").style.display = "block";
-  document.getElementById("batchTable").style.display   = "none";
-  document.getElementById("batchEmpty").style.display   = "none";
-  try {
-    const data = await (await fetch("/results")).json();
-    allResults = data;
-    if (!data.length) {
-      document.getElementById("batchLoading").style.display = "none";
-      document.getElementById("batchEmpty").style.display   = "block";
+let allResults=[];
+async function loadResults(){
+  document.getElementById("batchLoading").style.display="block";
+  document.getElementById("batchTable").style.display="none";
+  document.getElementById("batchEmpty").style.display="none";
+  try{
+    const data=await(await fetch("/results")).json();
+    allResults=data;
+    if(!data.length){
+      document.getElementById("batchLoading").style.display="none";
+      document.getElementById("batchEmpty").style.display="block";
       return;
     }
     renderStats(data);
     renderTable(data);
-    document.getElementById("batchLoading").style.display = "none";
-    document.getElementById("batchTable").style.display   = "block";
-  } catch(e) {
-    document.getElementById("batchLoading").textContent = "Failed to load.";
+    document.getElementById("batchLoading").style.display="none";
+    document.getElementById("batchTable").style.display="block";
+  }catch(e){
+    document.getElementById("batchLoading").textContent="Failed to load.";
   }
 }
 
-function renderStats(data) {
-  const avg  = (data.reduce((s,r)=>s+r.overall_score,0)/data.length).toFixed(1);
-  const pass = data.filter(r=>r.overall_score>=60).length;
-  const viol = data.reduce((s,r)=>s+r.violations,0);
-  const res  = data.filter(r=>r.was_resolved).length;
-  document.getElementById("statsStrip").innerHTML = [
-    {label:"Total",          val:data.length,    color:"#e2e8f0"},
-    {label:"Avg Score",      val:avg+"/100",      color:"#38bdf8"},
-    {label:"Passing ≥60",   val:pass,            color:"#22c55e"},
-    {label:"Violations",     val:viol,            color:"#f87171"},
-    {label:"Resolved",       val:res,             color:"#34d399"},
-  ].map(s=>`<div class="stat-item"><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-lbl">${s.label}</div></div>`).join("");
+function renderStats(data){
+  const avg=(data.reduce((s,r)=>s+r.overall_score,0)/data.length).toFixed(1);
+  const pass=data.filter(r=>r.overall_score>=60).length;
+  const viol=data.reduce((s,r)=>s+r.violations,0);
+  const res=data.filter(r=>r.was_resolved).length;
+  document.getElementById("statsStrip").innerHTML=[
+    {label:"Total",       val:data.length, color:"#e2e8f0"},
+    {label:"Avg Score",   val:avg+"/100",  color:"#38bdf8"},
+    {label:"Passing ≥60", val:pass,        color:"#22c55e"},
+    {label:"Violations",  val:viol,        color:"#f87171"},
+    {label:"Resolved",    val:res,         color:"#34d399"},
+  ].map(s=>`<div class="stat-item">
+    <div class="stat-val" style="color:${s.color}">${s.val}</div>
+    <div class="stat-lbl">${s.label}</div>
+  </div>`).join("");
 }
 
-function renderTable(data) {
-  document.getElementById("tblBody").innerHTML = data.map((r,i) => {
-    const gc   = GRADE_C[r.grade] || "#64748b";
-    const name = r.filename.length>32 ? r.filename.slice(0,30)+"…" : r.filename;
-    const type = r._type==="live_upload" ? "🔴 Live" : "📦 Batch";
-    const sat  = (r.satisfaction_rating || r.satisfaction?.rating || 0).toFixed(1);
-    return `<tr class="trow" onclick="expandRow(${i})" title="Click to expand">
+function renderTable(data){
+  document.getElementById("tblBody").innerHTML=data.map((r,i)=>{
+    const gc=GRADE_C[r.grade]||"#64748b";
+    const name=r.filename.length>32?r.filename.slice(0,30)+"…":r.filename;
+    const type=r._type==="live_upload"?"🔴 Live":"📦 Batch";
+    return `<tr class="trow" onclick="expandRow(${i})">
       <td class="td-name" title="${r.filename}">${name}</td>
       <td><span class="gbadge" style="color:${gc};border-color:${gc}44;background:${gc}18">${r.grade}</span></td>
-      <td>
-        <div class="si"><span class="sn" style="color:${scoreColor(r.overall_score)}">${r.overall_score}</span>
-        <div class="mb"><div class="mbb" style="width:${r.overall_score}%;background:${scoreColor(r.overall_score)}"></div></div></div>
-      </td>
+      <td><div class="si">
+        <span class="sn" style="color:${scoreColor(r.overall_score)}">${r.overall_score}</span>
+        <div class="mb"><div class="mbb" style="width:${r.overall_score}%;background:${scoreColor(r.overall_score)}"></div></div>
+      </div></td>
       <td><span style="color:${SENT_C[(r.sentiment||'').toLowerCase()]||'#94a3b8'}">${cap(r.sentiment||"—")}</span></td>
       <td><span class="${r.was_resolved?'yes':'no'}">${r.was_resolved?"✔ Resolved":"✘ Unresolved"}</span></td>
       <td>${r.violations>0?`<span class="vbadge2">${r.violations}</span>`:'<span class="noviol">0</span>'}</td>
       <td><span class="type-tag">${type}</span></td>
+      <td><a class="pdf-link" href="/download_pdf/${r.filename}" target="_blank">⬇ PDF</a></td>
     </tr>`;
   }).join("");
 }
 
-function expandRow(i) {
-  const r      = allResults[i];
-  const panel  = document.getElementById("rowDetail");
-  const gc     = GRADE_C[r.grade]||"#64748b";
-  const dims   = r.scores || {};
-  const DIM_LABELS = {empathy:"Empathy",professionalism:"Professionalism",compliance:"Compliance",resolution_effectiveness:"Resolution",communication_clarity:"Clarity"};
-  let dimHtml  = Object.entries(DIM_LABELS).map(([k,l])=>{
-    const v = dims[k]??0, c=scoreColor(v,10);
-    return `<div class="rd-dim"><span class="rd-dim-l">${l}</span><div class="rd-bar-w"><div class="rd-bar" style="width:${v*10}%;background:${c}"></div></div><span class="rd-dim-v" style="color:${c}">${v}/10</span></div>`;
+function expandRow(i){
+  const r=allResults[i];
+  const panel=document.getElementById("rowDetail");
+  const gc=GRADE_C[r.grade]||"#64748b";
+  const dims=r.scores||{};
+  const DIM_LABELS={empathy:"Empathy",professionalism:"Professionalism",compliance:"Compliance",resolution_effectiveness:"Resolution",communication_clarity:"Clarity"};
+  const dimHtml=Object.entries(DIM_LABELS).map(([k,l])=>{
+    const v=dims[k]??0,c=scoreColor(v,10);
+    return `<div class="rd-dim">
+      <span class="rd-dim-l">${l}</span>
+      <div class="rd-bar-w"><div class="rd-bar" style="width:${v*10}%;background:${c}"></div></div>
+      <span class="rd-dim-v" style="color:${c}">${v}/10</span>
+    </div>`;
   }).join("");
-  panel.innerHTML = `
+  panel.innerHTML=`
     <div class="rd-head">
       <span style="color:${gc};font-weight:800">${r.grade} · ${r.overall_score}/100</span>
       &nbsp; ${r.filename}
+      <a class="pdf-link" href="/download_pdf/${r.filename}" target="_blank" style="margin-left:auto;margin-right:12px">⬇ PDF</a>
       <span class="rd-close" onclick="closeRow()">✕</span>
     </div>
     <div class="rd-summary">${r.summary||"—"}</div>
-    <div class="rd-issue"><span class="issue-lbl">Issue</span>${r.issue_detected||"—"}</div>
+    <div class="rd-issue"><span class="issue-lbl">Issue</span><span class="issue-val">${r.issue_detected||"—"}</span></div>
     ${dimHtml}`;
-  panel.style.display = "block";
+  panel.style.display="block";
   panel.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function closeRow(){ document.getElementById("rowDetail").style.display="none"; }
-function fmtKey(k){ return (k||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()); }
 
 loadResults();
 </script>

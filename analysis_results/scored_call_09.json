@@ -1,0 +1,69 @@
+{
+  "summary": "The customer had trouble with an online payment and the agent requested sensitive information, including the customer's PIN, which raised security concerns and led to the customer ending the call. The agent's behavior was unprofessional and non-compliant with security protocols. The issue was not resolved.",
+  "sentiment": "negative",
+  "performance": "poor",
+  "issue": "The agent requested the customer's PIN over the phone, which is a serious security violation.",
+  "resolution": "The agent should not have requested the customer's PIN over the phone and should have been more transparent about the security measures in place.",
+  "overall_score": 20,
+  "grade": "F",
+  "call_outcome": "Unresolved",
+  "was_resolved": false,
+  "issue_detected": "Security concerns with online payment",
+  "satisfaction": {
+    "customer_satisfaction": 0,
+    "agent_performance": 2
+  },
+  "agent_quality": {
+    "empathy": 0,
+    "professionalism": 0,
+    "knowledge": 2
+  },
+  "dimension_scores": {
+    "empathy": 0,
+    "professionalism": 0,
+    "compliance": 0,
+    "resolution_effectiveness": 0,
+    "communication_clarity": 20
+  },
+  "scores": {
+    "empathy": 0,
+    "professionalism": 0,
+    "compliance": 0,
+    "resolution_effectiveness": 0,
+    "communication_clarity": 20
+  },
+  "model_metrics": {
+    "confidence": 0.95,
+    "tokens_used": 100
+  },
+  "violations": [
+    {
+      "type": "Security protocol violation",
+      "severity": "critical",
+      "explanation": "The agent requested the customer's PIN over the phone, which is a serious security violation."
+    },
+    {
+      "type": "Lack of empathy and professionalism",
+      "severity": "high",
+      "explanation": "The agent was dismissive and unhelpful when the customer expressed security concerns."
+    },
+    {
+      "type": "Non-compliance with escalation policy",
+      "severity": "high",
+      "explanation": "The agent did not offer to escalate the issue when the customer was dissatisfied."
+    }
+  ],
+  "improvements": [
+    {
+      "area": "Security protocols",
+      "suggestion": "The agent should not have requested the customer's PIN over the phone and should have been more transparent about the security measures in place."
+    },
+    {
+      "area": "Customer service skills",
+      "suggestion": "The agent should have been more empathetic and helpful when the customer expressed security concerns."
+    }
+  ],
+  "highlights": [],
+  "_source": "call_09.mp3",
+  "_type": "live_upload"
+}

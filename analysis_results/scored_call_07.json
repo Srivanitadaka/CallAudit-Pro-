@@ -1,73 +1,61 @@
 {
-  "summary": "The customer's urgent issue with their roof being torn off in a storm was not adequately addressed by the agent, who seemed unhelpful and unempathetic. The customer was told to call back the next day to check on emergency assistance coverage, which was unacceptable given the urgent nature of the situation.",
+  "summary": "The customer's roof was damaged in a storm and they needed emergency assistance, but the agent failed to provide a timely solution and instead told the customer to call back tomorrow. The customer was left unsatisfied and the issue was not resolved. The agent's performance was subpar and did not meet the customer's urgent needs.",
   "sentiment": "negative",
   "performance": "poor",
-  "issue": "The agent's response came across as dismissive and unempathetic, which is not acceptable in a customer service interaction.",
-  "resolution": "The agent should have acknowledged the customer's urgency and offered a more timely solution or alternative assistance.",
+  "issue": "The agent failed to treat the customer's emergency claim as a high priority and did not follow the emergency escalation protocol.",
+  "resolution": "The agent should have immediately escalated the customer's emergency claim and provided a timely solution, such as sending an emergency assessor or providing temporary coverage.",
   "overall_score": 40,
-  "grade": "D",
+  "grade": "F",
   "call_outcome": "Unresolved",
   "was_resolved": false,
-  "issue_detected": "The customer's roof was torn off in a storm, and they needed emergency assistance to prevent further damage.",
+  "issue_detected": "Emergency claim for storm damage to customer's roof",
   "satisfaction": {
-    "rating": 1.5,
-    "sentiment": "Negative",
-    "sentiment_score": 0.2,
-    "emotional_stability": "Poor",
-    "customer_frustration": "Very High",
-    "frustration_reason": "Lack of urgency and assistance from the agent"
+    "customer_satisfaction": 2,
+    "agent_performance": 3
   },
   "agent_quality": {
-    "language_clarity": 10,
-    "professionalism": 5,
-    "time_efficiency": 5,
-    "response_efficiency": 5,
-    "empathy_score": 1.0,
-    "bias_detected": false,
-    "bias_notes": "None",
-    "empathy_phrases_used": [],
-    "calmed_customer": false
+    "empathy": 2,
+    "professionalism": 4,
+    "knowledge": 6
   },
   "dimension_scores": {
-    "empathy": 2,
-    "professionalism": 5,
-    "compliance": 8,
-    "resolution_effectiveness": 2,
-    "communication_clarity": 8
+    "empathy": 20,
+    "professionalism": 40,
+    "compliance": 30,
+    "resolution_effectiveness": 10,
+    "communication_clarity": 50
   },
   "scores": {
-    "empathy": 2,
-    "professionalism": 5,
-    "compliance": 8,
-    "resolution_effectiveness": 2,
-    "communication_clarity": 8
+    "empathy": 20,
+    "professionalism": 40,
+    "compliance": 30,
+    "resolution_effectiveness": 10,
+    "communication_clarity": 50
   },
   "model_metrics": {
-    "precision": 0.9,
-    "recall": 0.8,
-    "f1_score": 0.85,
     "confidence": 0.9,
-    "notes": "High confidence in detection accuracy due to clear evidence of poor agent performance and customer frustration"
+    "tokens_used": 1000
   },
   "violations": [
     {
-      "type": "Lack of empathy",
-      "quote": "Agent says, fine.",
-      "severity": "high",
-      "explanation": "The agent's response came across as dismissive and unempathetic, which is not acceptable in a customer service interaction."
+      "type": "Emergency Claims",
+      "severity": "critical",
+      "explanation": "The agent failed to treat the customer's emergency claim as a high priority and did not follow the emergency escalation protocol."
     },
     {
-      "type": "Inadequate resolution",
-      "quote": "Agent says, assessor can come in two to three weeks.",
-      "severity": "high",
-      "explanation": "The agent's response did not provide a timely or adequate solution to the customer's urgent issue."
+      "type": "Rude Language",
+      "severity": "medium",
+      "explanation": "The agent's response of 'fine' and 'call back tomorrow' came across as dismissive and unhelpful."
     }
   ],
   "improvements": [
     {
-      "area": "Empathy and urgency",
-      "suggestion": "The agent should have acknowledged the customer's urgency and offered a more timely solution or alternative assistance.",
-      "example": "I understand that your situation is urgent, and I'm going to see what I can do to expedite the process. Can you please hold for just a moment while I check on some options?"
+      "area": "Emergency Claims Handling",
+      "suggestion": "The agent should have immediately escalated the customer's emergency claim and provided a timely solution, such as sending an emergency assessor or providing temporary coverage."
+    },
+    {
+      "area": "Communication Skills",
+      "suggestion": "The agent should have used more empathetic and solution-focused language to address the customer's urgent needs and concerns."
     }
   ],
   "highlights": [],

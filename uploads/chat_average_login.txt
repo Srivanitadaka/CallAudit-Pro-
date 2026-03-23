@@ -1,0 +1,15 @@
+Agent: Hello, thank you for reaching out to technical support. How can I help?
+Customer: Hi, I can't log into my account. It keeps saying my password is wrong but I just reset it.
+Agent: I can help you with that. Can you tell me the email address on your account?
+Customer: It's sarah.m@workplace.com
+Agent: Okay, I can see your account. It looks like your password was reset 20 minutes ago. Are you using the new password from the reset email?
+Customer: Yes, I copied it exactly from the email.
+Agent: Sometimes there can be a small delay. Can you try clearing your browser cache and trying again?
+Customer: I tried that already before contacting you.
+Agent: Okay. Let me try forcing a new password reset from my end. You should receive a new email in the next few minutes.
+Customer: Alright, I'll wait.
+Agent: The reset email has been sent. Please check your inbox and spam folder. Use the link within 15 minutes as it will expire.
+Customer: Got it. Let me try... okay it worked! I'm logged in now.
+Agent: Great, glad that worked. Is there anything else?
+Customer: No that's all, thanks.
+Agent: No problem. Have a good day.
