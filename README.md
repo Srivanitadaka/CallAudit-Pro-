@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 AI Customer Support Quality Auditor
 📌 Project Overview
 AI-powered Quality Assurance platform for customer support conversations.
@@ -145,3 +146,7 @@ Frontend:    HTML5, Vanilla JS, CSS3 (Glassmorphism)
 APIs:        REST, JSON, AJAX
 Deployment:  Single Python file (app.py)
 ✅ Status: COMPLETE ✅
+=======
+# CallAudit-Pro-
+CallAudit Pro is a call analysis and auditing platform designed to help teams review conversations, track performance metrics, ensure compliance, and generate meaningful insights from call data.
+>>>>>>> f2aab85fcc9a21468c2c465ead4702c9e6ca096a
