@@ -58,9 +58,9 @@ RESULTS_DIR.mkdir(exist_ok=True)
 
 # ── Page config ──────────────────────────────────────────
 st.set_page_config(
-    page_title = "CallAudit Pro",
-    page_icon  = "🎧",
-    layout     = "wide",
+    page_title="CallAudit Pro",
+    page_icon="🎧",
+    layout="wide",
 )
 
 # ── Global CSS ───────────────────────────────────────────
@@ -109,22 +109,24 @@ GRADE_C = {
     "C": "#f59e0b", "D": "#fb923c", "F": "#f87171"
 }
 
+
 def score_color(v, mx=100):
     p = v / mx
     return "#22c55e" if p >= .75 else "#f59e0b" if p >= .55 else "#f87171"
 
+
 # ── Session state defaults ───────────────────────────────
 _defaults = {
-    "page":            "🏠 Dashboard",
-    "result":          None,
-    "transcript":      "",
-    "alerts":          [],
-    "live_running":    False,
-    "live_transcript": "",
-    "live_result":     None,
-    "live_chunks":     0,
-    "pipeline":        None,
-    "live_monitor_obj":None,
+    "page":             "🏠 Dashboard",
+    "result":           None,
+    "transcript":       "",
+    "alerts":           [],
+    "live_running":     False,
+    "live_transcript":  "",
+    "live_result":      None,
+    "live_chunks":      0,
+    "pipeline":         None,
+    "live_monitor_obj": None,
 }
 for _k, _v in _defaults.items():
     if _k not in st.session_state:
@@ -149,7 +151,7 @@ with st.sidebar:
     page = st.radio(
         "Navigation",
         _pages,
-        index = _pages.index(st.session_state.page)
+        index=_pages.index(st.session_state.page)
     )
     st.session_state.page = page
 
@@ -186,6 +188,24 @@ def get_pipeline():
 # ══════════════════════════════════════════════════════════
 def run_analysis(text: str) -> dict:
     try:
+        # ── Patch: newer httpx dropped 'proxies' kwarg; some LangChain/Groq
+        #    versions still pass it. Monkey-patch before importing. ──────────
+        try:
+            import httpx
+            _orig_init = httpx.Client.__init__
+            def _patched_init(self, *args, **kwargs):
+                kwargs.pop("proxies", None)
+                _orig_init(self, *args, **kwargs)
+            httpx.Client.__init__ = _patched_init
+
+            _orig_async_init = httpx.AsyncClient.__init__
+            def _patched_async_init(self, *args, **kwargs):
+                kwargs.pop("proxies", None)
+                _orig_async_init(self, *args, **kwargs)
+            httpx.AsyncClient.__init__ = _patched_async_init
+        except Exception:
+            pass
+
         from llm.langchain_scorer  import score_with_langchain
         from realtime.alert_engine import AlertEngine
 
@@ -335,10 +355,10 @@ def render_result_dashboard(r: dict):
         # Customer satisfaction details
         st.markdown("#### 👤 Customer Satisfaction")
         sat_items = [
-            ("Sentiment",     sat.get("sentiment", "—")),
-            ("Frustration",   sat.get("customer_frustration", "—")),
-            ("Stability",     sat.get("emotional_stability", "—")),
-            ("Why",           sat.get("frustration_reason", "None")),
+            ("Sentiment",   sat.get("sentiment", "—")),
+            ("Frustration", sat.get("customer_frustration", "—")),
+            ("Stability",   sat.get("emotional_stability", "—")),
+            ("Why",         sat.get("frustration_reason", "None")),
         ]
         for label, val in sat_items:
             ca, cb = st.columns([2, 1])
@@ -378,7 +398,7 @@ def render_result_dashboard(r: dict):
         calmed = aq.get("calmed_customer", False)
         p1c    = "#f87171" if bias   else "#22c55e"
         p2c    = "#22c55e" if calmed else "#f87171"
-        p1txt  = "⚠ Bias Detected" if bias   else "✔ No Bias"
+        p1txt  = "⚠ Bias Detected"   if bias   else "✔ No Bias"
         p2txt  = "✔ Customer Calmed" if calmed else "✘ Not Calmed"
         st.markdown(
             f"<span style='color:{p1c};font-size:13px'>{p1txt}</span>"
@@ -403,7 +423,6 @@ def render_result_dashboard(r: dict):
                 expl  = v.get("explanation", "")[:120]
                 quote = v.get("quote", "")[:80]
 
-                # Build quote HTML cleanly — no chr() tricks
                 if quote:
                     quote_html = (
                         '<br><em style="color:#f87171;font-size:11px">'
@@ -435,7 +454,6 @@ def render_result_dashboard(r: dict):
                 sug     = i.get("suggestion", "")[:150]
                 example = i.get("example", "")[:100]
 
-                # Build example HTML cleanly
                 if example:
                     ex_html = (
                         '<br><em style="color:#64748b;font-size:11px">💬 '
@@ -550,16 +568,16 @@ if page == "🏠 Dashboard":
         st.markdown("**Audio File** (mp3, wav, m4a)")
         audio_file = st.file_uploader(
             "audio",
-            type             = ["mp3", "wav", "m4a", "flac"],
-            label_visibility = "collapsed"
+            type=["mp3", "wav", "m4a", "flac"],
+            label_visibility="collapsed"
         )
 
     with col_u2:
         st.markdown("**Transcript** (txt, json)")
         text_file = st.file_uploader(
             "transcript",
-            type             = ["txt", "json"],
-            label_visibility = "collapsed"
+            type=["txt", "json"],
+            label_visibility="collapsed"
         )
 
     if st.button("🔍 Analyze & Score", type="primary"):
@@ -576,6 +594,8 @@ if page == "🏠 Dashboard":
 
             if transcript:
                 st.success(f"✅ Transcribed — {len(transcript)} chars")
+                # Save transcript immediately so it shows even if scoring fails
+                st.session_state.transcript = transcript
             else:
                 st.error("❌ Transcription failed. Check DEEPGRAM_API_KEY.")
 
@@ -586,28 +606,68 @@ if page == "🏠 Dashboard":
             except Exception:
                 transcript = raw.decode("latin-1")
             st.success(f"✅ Loaded — {len(transcript)} chars")
+            st.session_state.transcript = transcript
 
         else:
             st.warning("Please upload an audio file or transcript first.")
 
         if transcript:
-            result = run_analysis(transcript)
+            with st.spinner("🤖 Analyzing transcript..."):
+                result = run_analysis(transcript)
             if result:
                 st.session_state.result     = result
                 st.session_state.transcript = transcript
                 grade = result.get("grade", "?")
                 score = result.get("overall_score", 0)
-                st.success(f"✅ Grade {grade} | Score {score}/100")
+                st.success(f"✅ Analysis complete — Grade {grade} | Score {score}/100")
+            else:
+                st.error(
+                    "❌ Scoring failed (check GROQ_API_KEY / LangChain version). "
+                    "Transcript is shown below."
+                )
 
-    # Show results
+    # Always show transcript if we have one (even if scoring failed)
+    if st.session_state.transcript and not st.session_state.result:
+        st.divider()
+        st.markdown("### 📄 Transcript (Scoring pending / failed)")
+        render_transcript(st.session_state.transcript)
+
+    # Show full results dashboard
     if st.session_state.result:
         st.divider()
         st.markdown("## 📊 Analysis Results")
+
+        # ── Quick summary card at the top ──────────────────
+        r = st.session_state.result
+        grade = r.get("grade", "?")
+        score = r.get("overall_score", 0)
+        gc    = GRADE_C.get(grade, "#64748b")
+        summary_text = r.get("summary", "No summary available.")
+
+        st.markdown(
+            f"""
+            <div style='background:#0d1320;border:1px solid #1e293b;border-radius:12px;
+                        padding:20px;margin-bottom:16px'>
+              <div style='display:flex;align-items:center;gap:16px;margin-bottom:12px'>
+                <span style='font-size:48px;font-weight:900;color:{gc}'>{grade}</span>
+                <div>
+                  <div style='font-size:22px;font-weight:700;color:#e2e8f0'>{score}/100</div>
+                  <div style='font-size:13px;color:#64748b'>Overall Score</div>
+                </div>
+              </div>
+              <div style='font-size:14px;color:#cbd5e1;line-height:1.6'>
+                <strong style='color:#38bdf8'>📝 AI Summary:</strong><br>{summary_text}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         render_result_dashboard(st.session_state.result)
 
         # Transcript viewer
         if st.session_state.transcript:
-            with st.expander("📄 View Transcript"):
+            with st.expander("📄 View Full Transcript"):
                 render_transcript(st.session_state.transcript)
 
         # PDF download
@@ -669,35 +729,80 @@ elif page == "🎤 Live Analysis":
                 if st.session_state.live_monitor_obj is None:
                     st.session_state.live_monitor_obj = LiveMonitor(socketio=None)
                 st.session_state.live_monitor_obj.start()
-                st.success("🎤 Microphone started!")
-            except Exception as e:
-                st.warning(f"Live mic unavailable: {e}\nUse manual input below.")
+                st.success("🎤 Microphone started! Speak now, then click Stop & Score.")
+            except BaseException as e:
+                st.session_state.live_running = False
+                st.warning(f"Microphone unavailable: {e} — Use Manual Transcript Input below.")
 
     with col2:
         if st.button("⏹ Stop & Score"):
+            # ── Step 1: mark stopped immediately ──────────
             st.session_state.live_running = False
-            try:
-                if st.session_state.live_monitor_obj is not None:
-                    stop_result = st.session_state.live_monitor_obj.stop()
-                    t = stop_result.get("transcript", "")
-                    if t:
-                        st.session_state.live_transcript = t
-                        with st.spinner("Scoring final transcript..."):
-                            scored = run_analysis(t)
-                            if scored:
-                                st.session_state.live_result = scored
-            except Exception as e:
-                st.warning(f"Stop error: {e}")
+            transcript = ""
+
+            # ── Step 2: grab transcript from monitor ──────
+            # Everything is wrapped in BaseException so PyAudio's
+            # SystemExit on Windows can NEVER reach Streamlit.
+            monitor = st.session_state.get("live_monitor_obj")
+            if monitor is not None:
+                try:
+                    # Get status BEFORE stop (transcript lives here)
+                    status     = monitor.get_status()
+                    transcript = (status.get("transcript") or "").strip()
+                except BaseException:
+                    transcript = ""
+
+                try:
+                    # stop() runs PyAudio teardown in a background
+                    # thread internally — never raises here
+                    result_dict = monitor.stop()
+                    if not transcript:
+                        transcript = (result_dict.get("transcript") or "").strip()
+                except BaseException:
+                    pass
+
+                # Always clear the monitor reference
+                st.session_state.live_monitor_obj = None
+
+            # ── Step 3: fall back to any partial transcript ─
+            if not transcript:
+                transcript = (st.session_state.get("live_transcript") or "").strip()
+
+            # ── Step 4: score if we have content ──────────
+            if len(transcript) > 20:
+                st.session_state.live_transcript = transcript
+                with st.spinner("🤖 AI scoring..."):
+                    scored = run_analysis(transcript)
+                if scored:
+                    st.session_state.live_result = scored
+                    st.success(
+                        f"✅ Grade {scored.get('grade')} | "
+                        f"Score {scored.get('overall_score')}/100"
+                    )
+                else:
+                    st.error(
+                        "❌ Scoring failed — check GROQ_API_KEY. "
+                        "Your transcript was captured. Copy it and paste "
+                        "it into Manual Transcript Input below to retry."
+                    )
+            else:
+                st.warning(
+                    "⚠ No transcript captured yet. The microphone records "
+                    "in 5-second chunks — make sure you spoke for at least "
+                    "10 seconds before stopping. OR paste a transcript "
+                    "manually below and click Analyze Transcript."
+                )
 
     with col3:
         if st.button("🔄 Refresh Transcript"):
             try:
-                if st.session_state.live_monitor_obj is not None:
-                    status = st.session_state.live_monitor_obj.get_status()
+                monitor = st.session_state.get("live_monitor_obj")
+                if monitor is not None:
+                    status = monitor.get_status()
                     st.session_state.live_transcript = status.get("transcript", "")
                     st.session_state.live_chunks    += 1
                     st.rerun()
-            except Exception:
+            except BaseException:
                 pass
 
     st.divider()
@@ -711,9 +816,9 @@ elif page == "🎤 Live Analysis":
 
     manual_text = st.text_area(
         "Transcript",
-        height           = 200,
-        placeholder      = "Agent: Thank you for calling support...\nCustomer: I have an issue with my order...",
-        label_visibility = "collapsed"
+        height=200,
+        placeholder="Agent: Thank you for calling support...\nCustomer: I have an issue with my order...",
+        label_visibility="collapsed"
     )
 
     if st.button("⚡ Analyze Transcript", type="primary"):
@@ -739,6 +844,33 @@ elif page == "🎤 Live Analysis":
     if st.session_state.live_result:
         st.divider()
         st.markdown("## 📊 Live Scoring Result")
+
+        # ── Quick summary card ─────────────────────────────
+        r     = st.session_state.live_result
+        grade = r.get("grade", "?")
+        score = r.get("overall_score", 0)
+        gc    = GRADE_C.get(grade, "#64748b")
+        summary_text = r.get("summary", "No summary available.")
+
+        st.markdown(
+            f"""
+            <div style='background:#0d1320;border:1px solid #1e293b;border-radius:12px;
+                        padding:20px;margin-bottom:16px'>
+              <div style='display:flex;align-items:center;gap:16px;margin-bottom:12px'>
+                <span style='font-size:48px;font-weight:900;color:{gc}'>{grade}</span>
+                <div>
+                  <div style='font-size:22px;font-weight:700;color:#e2e8f0'>{score}/100</div>
+                  <div style='font-size:13px;color:#64748b'>Overall Score</div>
+                </div>
+              </div>
+              <div style='font-size:14px;color:#cbd5e1;line-height:1.6'>
+                <strong style='color:#38bdf8'>📝 AI Summary:</strong><br>{summary_text}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         render_result_dashboard(st.session_state.live_result)
 
         # PDF download
@@ -802,8 +934,8 @@ elif page == "📊 Supervisor":
         fc1, fc2, fc3 = st.columns(3)
         with fc1:
             grade_f = st.multiselect(
-                "Grade", ["A","B","C","D","F"],
-                default=["A","B","C","D","F"]
+                "Grade", ["A", "B", "C", "D", "F"],
+                default=["A", "B", "C", "D", "F"]
             )
         with fc2:
             outcomes  = df["outcome"].unique().tolist()
@@ -826,12 +958,12 @@ elif page == "📊 Supervisor":
     # KPIs
     st.markdown("### 📊 Team Overview")
     k1, k2, k3, k4, k5, k6 = st.columns(6)
-    k1.metric("Total Calls",       len(df_f))
-    k2.metric("Avg Score",         f"{df_f['score'].mean():.1f}/100")
-    k3.metric("Pass Rate ≥60",     f"{(df_f['score'] >= 60).sum() / len(df_f) * 100:.0f}%")
-    k4.metric("Total Violations",  int(df_f["violations"].sum()))
-    k5.metric("Resolved",          int(df_f["resolved"].sum()))
-    k6.metric("Grade F",           int((df_f["grade"] == "F").sum()))
+    k1.metric("Total Calls",      len(df_f))
+    k2.metric("Avg Score",        f"{df_f['score'].mean():.1f}/100")
+    k3.metric("Pass Rate ≥60",    f"{(df_f['score'] >= 60).sum() / len(df_f) * 100:.0f}%")
+    k4.metric("Total Violations", int(df_f["violations"].sum()))
+    k5.metric("Resolved",         int(df_f["resolved"].sum()))
+    k6.metric("Grade F",          int((df_f["grade"] == "F").sum()))
 
     st.divider()
 
@@ -848,7 +980,7 @@ elif page == "📊 Supervisor":
         fig.update_layout(
             plot_bgcolor="#0d1320", paper_bgcolor="#0d1320",
             font_color="#e2e8f0", bargap=0.1,
-            height=250, margin=dict(l=0,r=0,t=0,b=0), showlegend=False
+            height=250, margin=dict(l=0, r=0, t=0, b=0), showlegend=False
         )
         fig.update_xaxes(gridcolor="#1e293b")
         fig.update_yaxes(gridcolor="#1e293b")
@@ -866,7 +998,7 @@ elif page == "📊 Supervisor":
         fig2.update_layout(
             plot_bgcolor="#0d1320", paper_bgcolor="#0d1320",
             font_color="#e2e8f0", height=250,
-            margin=dict(l=0,r=0,t=0,b=0), showlegend=False
+            margin=dict(l=0, r=0, t=0, b=0), showlegend=False
         )
         fig2.update_xaxes(gridcolor="#1e293b")
         fig2.update_yaxes(gridcolor="#1e293b")
@@ -877,8 +1009,8 @@ elif page == "📊 Supervisor":
 
     with ch3:
         st.markdown("**Dimension Team Averages**")
-        dim_keys   = ["empathy","professionalism","compliance","resolution","clarity"]
-        dim_labels = ["Empathy","Professionalism","Compliance","Resolution","Clarity"]
+        dim_keys   = ["empathy", "professionalism", "compliance", "resolution", "clarity"]
+        dim_labels = ["Empathy", "Professionalism", "Compliance", "Resolution", "Clarity"]
         dim_avgs   = [df_f[k].mean() for k in dim_keys]
 
         fig3 = go.Figure(go.Bar(
@@ -907,8 +1039,8 @@ elif page == "📊 Supervisor":
             mode = "lines+markers",
             line = dict(color="#38bdf8", width=2),
             marker = dict(
-                color = [score_color(s) for s in df_f["score"]],
-                size  = 8
+                color=[score_color(s) for s in df_f["score"]],
+                size=8
             ),
             text          = df_f["filename"].tolist(),
             hovertemplate = "%{text}<br>Score: %{y}<extra></extra>"
@@ -1036,9 +1168,9 @@ elif page == "📊 Supervisor":
     ]
     st.dataframe(
         display_df,
-        use_container_width = True,
-        hide_index          = True,
-        column_config       = {
+        use_container_width=True,
+        hide_index=True,
+        column_config={
             "Score": st.column_config.ProgressColumn("Score", min_value=0, max_value=100),
             "Sat":   st.column_config.ProgressColumn("Sat",   min_value=0, max_value=5),
         }
@@ -1063,9 +1195,9 @@ elif page == "📊 Supervisor":
     if all_viols:
         st.dataframe(
             pd.DataFrame(all_viols),
-            use_container_width = True,
-            hide_index          = True,
-            column_config       = {
+            use_container_width=True,
+            hide_index=True,
+            column_config={
                 "Score": st.column_config.ProgressColumn("Score", min_value=0, max_value=100),
             }
         )

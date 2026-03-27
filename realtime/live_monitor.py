@@ -1,3 +1,12 @@
+# realtime/live_monitor.py
+"""
+LiveMonitor — orchestrates microphone capture + transcription + scoring.
+
+stop() is designed to NEVER raise into the Streamlit main thread.
+All PyAudio work happens inside AudioCapture which runs teardown
+off the main thread (see audio_capture.py).
+"""
+
 import sys
 import threading
 import time
@@ -7,20 +16,16 @@ from datetime import datetime
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from realtime.audio_capture      import AudioCapture
-from realtime.stream_transcriber  import StreamTranscriber
-from realtime.alert_engine        import AlertEngine
+from realtime.audio_capture     import AudioCapture
+from realtime.stream_transcriber import StreamTranscriber
+from realtime.alert_engine       import AlertEngine
 
-SCORE_INTERVAL_SECS = 15   # score every 30 seconds
+SCORE_INTERVAL_SECS = 15
 
 
 class LiveMonitor:
 
     def __init__(self, socketio=None):
-        """
-        socketio: Flask-SocketIO instance for real-time updates.
-                  Can be None for testing without WebSocket.
-        """
         self.socketio      = socketio
         self.is_running    = False
         self.start_time    = None
@@ -28,249 +33,213 @@ class LiveMonitor:
         self.all_alerts    = []
         self.transcript    = ""
 
-        # ── Components ─────────────────────────────────
         self.alert_engine = AlertEngine(socketio=socketio)
 
-        self.transcriber  = StreamTranscriber(
-            on_transcript_callback = self._on_new_transcript
-        )
-        self.audio_capture = AudioCapture(
-            on_chunk_callback = self._on_audio_chunk
-        )
+        self.transcriber = StreamTranscriber(
+            on_transcript_callback=self._on_new_transcript)
 
-        # ── RAG Pipeline ────────────────────────────────
+        self.audio_capture = AudioCapture(
+            on_chunk_callback=self._on_audio_chunk)
+
         try:
             from rag_pipeline.rag_pipeline import RAGPipeline
             self.pipeline = RAGPipeline(backend="chromadb")
             self.pipeline.setup()
-        except Exception as e:
-            print(f"  ⚠️  RAG Pipeline setup failed: {e}")
+        except BaseException as e:
+            print(f"  RAG Pipeline setup failed: {e}")
             self.pipeline = None
 
-        # ── Score timer ─────────────────────────────────
         self._score_timer = None
 
-    # ══════════════════════════════════════════════════
-    # START
-    # ══════════════════════════════════════════════════
+    # ── Start ─────────────────────────────────────────────
+
     def start(self) -> dict:
-        """Start live call monitoring."""
         if self.is_running:
             return {"status": "already_running"}
 
-        self.is_running  = True
-        self.start_time  = datetime.now()
-        self.transcript  = ""
-        self.all_alerts  = []
+        self.is_running = True
+        self.start_time = datetime.now()
+        self.transcript = ""
+        self.all_alerts = []
         self.transcriber.reset()
 
-        # Start audio capture
         self.audio_capture.start()
-
-        # Start periodic scoring
         self._schedule_scoring()
 
-        print(f"\n  🔴 LIVE MONITORING STARTED")
-        print(f"     Time: {self.start_time.strftime('%H:%M:%S')}")
+        print(f"  LIVE MONITORING STARTED  {self.start_time.strftime('%H:%M:%S')}")
 
         if self.socketio:
-            self.socketio.emit("monitor_started", {
-                "time": self.start_time.strftime("%H:%M:%S")
-            })
+            try:
+                self.socketio.emit("monitor_started",
+                    {"time": self.start_time.strftime("%H:%M:%S")})
+            except BaseException:
+                pass
 
         return {"status": "started"}
 
-    # ══════════════════════════════════════════════════
-    # STOP
-    # ══════════════════════════════════════════════════
+    # ── Stop ──────────────────────────────────────────────
+
     def stop(self) -> dict:
-        """Stop live call monitoring and return final result."""
-        if not self.is_running:
-            return {"status": "not_running"}
-
+        """
+        Safely stop monitoring.
+        Never raises — all errors are caught internally.
+        Returns a dict with 'transcript' always present.
+        """
         self.is_running = False
-        self.audio_capture.stop()
 
-        if self._score_timer:
-            self._score_timer.cancel()
+        # Cancel score timer
+        try:
+            if self._score_timer is not None:
+                self._score_timer.cancel()
+                self._score_timer = None
+        except BaseException:
+            pass
 
-        # Run final score
-        final    = self._run_score()
-        duration = (datetime.now() - self.start_time).seconds
+        # Stop audio (runs PyAudio teardown in background thread internally)
+        try:
+            self.audio_capture.stop()
+        except BaseException as e:
+            print(f"  Audio stop error (ignored): {e}")
 
-        print(f"\n  ⏹  MONITORING STOPPED")
-        print(f"     Duration : {duration}s")
-        if final:
-            print(f"     Final    : Grade {final.get('grade')} | "
-                  f"{final.get('overall_score')}/100")
+        # Collect transcript
+        try:
+            live = self.transcriber.get_transcript()
+            if live and live.strip():
+                self.transcript = live
+        except BaseException:
+            pass
 
-        if self.socketio:
-            self.socketio.emit("monitor_stopped", {
-                "duration":    duration,
-                "final_score": final
-            })
+        duration = 0
+        try:
+            if self.start_time:
+                duration = (datetime.now() - self.start_time).seconds
+        except BaseException:
+            pass
+
+        print(f"  MONITORING STOPPED  duration={duration}s  "
+              f"transcript={len(self.transcript)} chars")
 
         return {
-            "status":      "stopped",
-            "duration":    duration,
-            "final_score": final,
-            "alerts":      self.all_alerts,
-            "transcript":  self.transcript
+            "status":     "stopped",
+            "duration":   duration,
+            "transcript": self.transcript,
+            "alerts":     self.all_alerts,
         }
 
-    # ══════════════════════════════════════════════════
-    # GET STATUS
-    # ══════════════════════════════════════════════════
+    # ── Status ────────────────────────────────────────────
+
     def get_status(self) -> dict:
-        """Return current monitoring status."""
         duration = 0
-        if self.start_time:
-            duration = (datetime.now() - self.start_time).seconds
+        try:
+            if self.start_time:
+                duration = (datetime.now() - self.start_time).seconds
+        except BaseException:
+            pass
+
+        try:
+            live = self.transcriber.get_transcript()
+            if live and live.strip():
+                self.transcript = live
+        except BaseException:
+            pass
 
         return {
             "is_running":    self.is_running,
             "duration":      duration,
-            "transcript":    self.transcript[-2000:],
+            "transcript":    self.transcript,
             "current_score": self.current_score,
             "alerts":        self.all_alerts[-10:],
         }
 
-    # ══════════════════════════════════════════════════
-    # INTERNAL CALLBACKS
-    # ══════════════════════════════════════════════════
+    # ── Internal callbacks ────────────────────────────────
+
     def _on_audio_chunk(self, wav_path: str):
-        """Called every 5 seconds with new audio chunk."""
         if not self.is_running:
-            AudioCapture.cleanup(wav_path)
+            try:
+                AudioCapture.cleanup(wav_path)
+            except BaseException:
+                pass
             return
 
-        # Transcribe in separate thread so audio capture is not blocked
-        thread = threading.Thread(
-            target = self._transcribe_and_cleanup,
-            args   = (wav_path,),
-            daemon = True
-        )
-        thread.start()
+        t = threading.Thread(
+            target=self._transcribe_chunk,
+            args=(wav_path,), daemon=True)
+        t.start()
 
-    def _transcribe_and_cleanup(self, wav_path: str):
-        """Transcribe chunk then delete temp file."""
+    def _transcribe_chunk(self, wav_path: str):
         try:
             self.transcriber.transcribe_chunk(wav_path)
+        except BaseException as e:
+            print(f"  Transcribe error: {e}")
         finally:
-            AudioCapture.cleanup(wav_path)
+            try:
+                AudioCapture.cleanup(wav_path)
+            except BaseException:
+                pass
 
-    def _on_new_transcript(self, new_text: str, full_transcript: str):
-        """Called every time new transcript text arrives."""
-        self.transcript = full_transcript
-
+    def _on_new_transcript(self, new_text: str, full: str):
+        self.transcript = full
         if self.socketio:
-            self.socketio.emit("transcript_update", {
-                "new_text":  new_text,
-                "full_text": full_transcript[-3000:]
-            })
+            try:
+                self.socketio.emit("transcript_update",
+                    {"new_text": new_text, "full_text": full[-3000:]})
+            except BaseException:
+                pass
 
-    # ══════════════════════════════════════════════════
-    # PERIODIC SCORING
-    # ══════════════════════════════════════════════════
+    # ── Periodic scoring ──────────────────────────────────
+
     def _schedule_scoring(self):
-        """Schedule next scoring cycle."""
         if not self.is_running:
             return
         self._score_timer = threading.Timer(
-            SCORE_INTERVAL_SECS,
-            self._scoring_tick
-        )
+            SCORE_INTERVAL_SECS, self._scoring_tick)
         self._score_timer.daemon = True
         self._score_timer.start()
 
     def _scoring_tick(self):
-        """Run score then schedule next cycle."""
         if not self.is_running:
             return
         self._run_score()
         self._schedule_scoring()
 
     def _run_score(self) -> dict:
-        """Score current transcript using RAG + LangChain."""
+        try:
+            live = self.transcriber.get_transcript()
+            if live and live.strip():
+                self.transcript = live
+        except BaseException:
+            pass
+
         if not self.transcript.strip():
             return None
-
         if not self.pipeline:
-            print("  ⚠️  RAG Pipeline not available")
             return None
 
         try:
             from llm.langchain_scorer import score_with_langchain
-
-            print(f"\n  ⚡ Running live score...")
             enriched = self.pipeline.enrich(self.transcript)
             result   = score_with_langchain(enriched)
-
             if result:
                 self.current_score = result
-
-                # Check compliance alerts
-                alerts = self.alert_engine.check_and_alert(
-                    result, self.transcript
-                )
-                if alerts:
-                    self.all_alerts.extend(alerts)
-
-                # Push score update to dashboard
+                try:
+                    alerts = self.alert_engine.check_and_alert(
+                        result, self.transcript)
+                    if alerts:
+                        self.all_alerts.extend(alerts)
+                except BaseException:
+                    pass
                 if self.socketio:
-                    self.socketio.emit("score_update", {
-                        "score":      result.get("overall_score", 0),
-                        "grade":      result.get("grade", "?"),
-                        "violations": result.get("violations", []),
-                        "summary":    result.get("summary", ""),
-                        "dimensions": result.get("dimension_scores", {})
-                    })
-
+                    try:
+                        self.socketio.emit("score_update", {
+                            "score":      result.get("overall_score", 0),
+                            "grade":      result.get("grade", "?"),
+                            "violations": result.get("violations", []),
+                            "summary":    result.get("summary", ""),
+                            "dimensions": result.get("dimension_scores", {}),
+                        })
+                    except BaseException:
+                        pass
             return result
-
-        except Exception as e:
-            print(f"  ⚠️  Live scoring failed: {e}")
+        except BaseException as e:
+            print(f"  Live scoring error: {e}")
             return None
-
-
-
-
-
-# ══════════════════════════════════════════════════════
-# RUN DIRECTLY — test
-# ══════════════════════════════════════════════════════
-if __name__ == "__main__":
-    import time
-
-    print("="*50)
-    print("  Live Monitor Test — 20 seconds")
-    print("="*50)
-    print("  Speak into your microphone!")
-    print("  Transcript updates every 5 seconds")
-    print("  Score appears after 30 seconds")
-    print("="*50)
-
-    monitor = LiveMonitor(socketio=None)
-    result  = monitor.start()
-    print(f"\n  Status: {result['status']}")
-
-    for i in range(20, 0, -1):
-        print(f"  Monitoring... {i}s remaining", end="\r")
-        time.sleep(1)
-
-    print("\n  Stopping...")
-    final = monitor.stop()
-
-    print(f"\n{'='*50}")
-    print(f"  RESULTS")
-    print(f"{'='*50}")
-    print(f"  Duration   : {final['duration']}s")
-    print(f"  Transcript : {final['transcript'][:300]}")
-    print(f"  Alerts     : {len(final['alerts'])}")
-
-    if final.get("final_score"):
-        s = final["final_score"]
-        print(f"  Grade      : {s.get('grade')}")
-        print(f"  Score      : {s.get('overall_score')}/100")
-
-    print("✅ Live monitor test done")

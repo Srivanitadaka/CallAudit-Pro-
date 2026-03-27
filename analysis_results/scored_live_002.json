@@ -1,0 +1,62 @@
+{
+  "grade": "A",
+  "overall_score": 96,
+  "call_outcome": "Resolved",
+  "was_resolved": true,
+  "sentiment": "positive",
+  "summary": "The customer had an unexpected $45 increase in their bill due to roaming charges from calls made to Canada, but the issue was resolved by switching to a new plan that covers Canada and Mexico calls.",
+  "issue_detected": "Unexpected roaming charges",
+  "satisfaction": {
+    "sentiment": "positive",
+    "sentiment_score": 0.9,
+    "emotional_stability": "Excellent",
+    "customer_frustration": "None",
+    "frustration_reason": "None",
+    "rating": 4.8
+  },
+  "agent_quality": {
+    "language_clarity": 18,
+    "professionalism": 19,
+    "time_efficiency": 18,
+    "response_efficiency": 19,
+    "empathy_score": 8.5,
+    "bias_detected": false,
+    "calmed_customer": true,
+    "empathy_phrases_used": [
+      "I am sorry to hear that",
+      "totally understandable"
+    ]
+  },
+  "dimension_scores": {
+    "empathy": 9,
+    "professionalism": 9,
+    "compliance": 10,
+    "resolution_effectiveness": 9,
+    "communication_clarity": 9
+  },
+  "model_metrics": {
+    "precision": 0.95,
+    "recall": 0.92,
+    "f1_score": 0.93,
+    "confidence": 0.98,
+    "notes": "High confidence in assessment"
+  },
+  "violations": [],
+  "improvements": [
+    {
+      "area": "Proactive solutions",
+      "suggestion": "Offer additional services that may benefit the customer in the future",
+      "example": "We also have a plan that includes international texting, would you like me to explain the details?"
+    },
+    {
+      "area": "Customer education",
+      "suggestion": "Take the opportunity to educate the customer on how to avoid similar issues in the future",
+      "example": "To avoid unexpected roaming charges in the future, you can always check our website for international roaming rates before traveling"
+    }
+  ],
+  "highlights": [
+    "The agent effectively resolved the customer's issue by switching them to a new plan",
+    "The agent showed empathy and understanding towards the customer's situation"
+  ],
+  "compliance_alerts": []
+}
